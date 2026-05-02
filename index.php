@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ==========================================
 // 2. CONEXIÓN A LA BASE DE DATOS
 // ==========================================
-require_once 'config/database.php';
+require_once 'src/config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
@@ -39,56 +39,56 @@ $data = json_decode(file_get_contents("php://input"), true);
 // ==========================================
 switch ($route) {
     case 'refugios':
-        require_once 'refugios/controller/RefugioController.php';
+        require_once 'src/refugios/controller/RefugioController.php';
         $controller = new RefugioController($db);
         $controller->handleRequest($method, $data, $id);
         break;
 
     case 'familias':
-        require_once 'familias/controller/FamiliaController.php';
+        require_once 'src/familias/controller/FamiliaController.php';
         $controller = new FamiliaController($db);
         $controller->handleRequest($method, $data, $id);
         break;
 
     case 'familias/miembros':
-        require_once 'familias/controller/MiembroController.php';
+        require_once 'src/familias/controller/MiembroController.php';
         $controller = new MiembroController($db);
         $controller->handleRequest($method, $data, $id, $id_familia);
         break;
 
     case 'usuarios':
-        require_once 'usuarios/controller/UsuarioController.php';
+        require_once 'src/usuarios/controller/UsuarioController.php';
         $controller = new UsuarioController($db);
         $controller->handleRequest($method, $data, $id);
         break;
 
     case 'recursos':
-        require_once 'recursos/controller/RecursoController.php';
+        require_once 'src/recursos/controller/RecursoController.php';
         $controller = new RecursoController($db);
         $controller->handleRequest($method, $data, $id);
         break;
 
     case 'donantes':
-        require_once 'donaciones/controller/DonanteController.php';
+        require_once 'src/donaciones/controller/DonanteController.php';
         $controller = new DonanteController($db);
         $controller->handleRequest($method, $data, $id);
         break;
 
     case 'donaciones':
-        require_once 'donaciones/controller/DonacionController.php';
+        require_once 'src/donaciones/controller/DonacionController.php';
         $controller = new DonacionController($db);
         // Le pasamos $action al controlador de donaciones para diferenciar cuando creamos donación y cuando agregamos detalle
         $controller->handleRequest($method, $data, $id, $action);
         break;
 
     case 'entregas':
-        require_once 'entregas/controller/EntregaController.php';
+        require_once 'src/entregas/controller/EntregaController.php';
         $controller = new EntregaController($db);
         $controller->handleRequest($method, $data, $id);
         break;
 
     case 'gestiones':
-        require_once 'gestiones/controller/GestionController.php';
+        require_once 'src/gestiones/controller/GestionController.php';
         $controller = new GestionController($db);
         // Nota que aquí no pasamos $id porque no necesitamos buscar/editar una gestión específica
         $controller->handleRequest($method, $data);
