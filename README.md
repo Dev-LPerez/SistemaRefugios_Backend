@@ -11,67 +11,68 @@ El proyecto sigue un patrón modular, donde cada entidad tiene su propio directo
 - **DTOs (Data Transfer Objects):** Validan y estructuran los datos de entrada antes de procesarlos.
 - **Configuración:** La conexión a la base de datos se realiza en `config/database.php` usando PDO.
 
-## Enrutamiento (Front Controller)
+## Enrutamiento (URLs Limpias)
 
-Todas las peticiones pasan por el archivo `index.php`, el cual intercepta y enruta la solicitud al controlador correspondiente utilizando parámetros en la URL:
+Todas las peticiones pasan por el archivo `index.php`, pero el sistema utiliza URLs limpias gracias a la configuración en el archivo `.htaccess`. Esto permite realizar las peticiones de la siguiente manera:
 
-- `?route=modulo` (Define el controlador a usar)
-- `?id=valor` (Opcional, para indicar un recurso específico)
-- `?action=valor` (Opcional, para acciones específicas)
-- `?id_familia=valor` (Opcional, filtro usado en miembros de familia)
+- `/modulo` (Define el controlador y recurso a usar)
+- `/modulo/id` (Opcional, para indicar un recurso específico por ID)
+- Parámetros adicionales como `?action=valor` o `?id_familia=valor` se pasan como Query Strings normales (`/modulo?parametro=valor`).
 
-Ejemplo general: `GET /index.php?route=refugios`
-Ejemplo de un recurso específico: `GET /index.php?route=refugios&id=1`
+Ejemplo general: `GET /refugios`
+Ejemplo de un recurso específico: `GET /refugios/1`
+Ejemplo compuesto: `GET /familias/miembros/1`
 
 ## Módulos y Endpoints Disponibles
 
-### Refugios (`?route=refugios`)
+### Refugios (`/refugios`)
 - `GET /` - Obtener todos los refugios.
-- `GET /&id={id}` - Obtener un refugio específico.
+- `GET /{id}` - Obtener un refugio específico.
 - `POST /` - Crear un nuevo refugio.
-- `PUT /&id={id}` - Actualizar un refugio.
-- `DELETE /&id={id}` - Eliminar un refugio.
+- `PUT /{id}` - Actualizar un refugio.
+- `DELETE /{id}` - Eliminar un refugio.
 
-### Familias (`?route=familias`)
+### Familias (`/familias`)
 - `GET /` - Obtener todas las familias.
-- `GET /&id={id}` - Obtener una familia por ID.
+- `GET /{id}` - Obtener una familia por ID.
 - `POST /` - Registrar una nueva familia.
-- `PUT /&id={id}` - Actualizar datos de una familia.
-- `DELETE /&id={id}` - Eliminar una familia.
+- `PUT /{id}` - Actualizar datos de una familia.
+- `DELETE /{id}` - Eliminar una familia.
 
-### Miembros de Familia (`?route=familias/miembros`)
-- `GET /&id_familia={id}` - Obtener los miembros de una familia.
-- Admite operaciones estándar CRUD pasando `?route=familias/miembros` e `&id={id}` o `POST /`.
+### Miembros de Familia (`/familias/miembros`)
+- `GET /?id_familia={id}` - Obtener los miembros de una familia específica.
+- Admite operaciones estándar CRUD pasando `/familias/miembros/{id}` o `/familias/miembros` en POST.
 
-### Usuarios (`?route=usuarios`)
+### Usuarios (`/usuarios`)
 - `GET /` - Listar usuarios del sistema.
-- `GET /&id={id}` - Obtener usuario por ID.
+- `GET /{id}` - Obtener usuario por ID.
 - `POST /` - Crear un usuario.
-- `PUT /&id={id}` - Actualizar datos del usuario.
-- `DELETE /&id={id}` - Eliminar usuario.
+- `PUT /{id}` - Actualizar datos del usuario.
+- `DELETE /{id}` - Eliminar usuario.
 
-### Recursos (`?route=recursos`)
-- `GET /`, `POST /`, `PUT /&id={id}`, `DELETE /&id={id}`
+### Recursos (`/recursos`)
+- `GET /`, `POST /`, `PUT /{id}`, `DELETE /{id}`
 
-### Donantes (`?route=donantes`)
-- `GET /`, `POST /`, `PUT /&id={id}`, `DELETE /&id={id}`
+### Donantes (`/donantes`)
+- `GET /`, `POST /`, `PUT /{id}`, `DELETE /{id}`
 
-### Donaciones (`?route=donaciones`)
-- `GET /`, `POST /`, `PUT /&id={id}`, `DELETE /&id={id}`
-- Admite el parámetro `&action=` para lógicas específicas (ej. agregar detalles de donación).
+### Donaciones (`/donaciones`)
+- `GET /`, `POST /`, `PUT /{id}`, `DELETE /{id}`
+- Admite el parámetro `?action=` para lógicas específicas (ej. agregar detalles de donación).
 
-### Entregas (`?route=entregas`)
-- `GET /`, `POST /`, `PUT /&id={id}`, `DELETE /&id={id}`
+### Entregas (`/entregas`)
+- `GET /`, `POST /`, `PUT /{id}`, `DELETE /{id}`
 
-### Gestiones (`?route=gestiones`)
+### Gestiones (`/gestiones`)
 - Maneja peticiones de propósito general o de gestión mediante solicitudes a este módulo.
 
 ## Instalación y Configuración Local
 
 1. Clona el repositorio en el directorio `htdocs` de XAMPP (o la carpeta equivalente en tu servidor local web).
 2. Configura las credenciales de la base de datos en `config/database.php` (`host`, `db_name`, `username`, `password`).
-3. Inicia Apache y MySQL desde el panel de control de XAMPP.
-4. Accede a la API a través de: `http://localhost/Backend_Refugios/index.php`.
+3. Asegúrate de tener habilitado el módulo `mod_rewrite` en Apache para que `.htaccess` funcione correctamente.
+4. Inicia Apache y MySQL desde el panel de control de XAMPP.
+5. Accede a la API a través de: `http://localhost/Backend_Refugios/` (ej: `http://localhost/Backend_Refugios/refugios`).
 
 ## CORS y JSON
 La API está configurada para:
@@ -83,14 +84,14 @@ La API está configurada para:
 
 1. Módulo: Refugios
 Listar todos los refugios:
-http://localhost/Backend_Refugios/index.php?route=refugios
+http://localhost/Backend_Refugios/refugios
 
 Ver un refugio específico (por ID):
-http://localhost/Backend_Refugios/index.php?route=refugios&id=1
+http://localhost/Backend_Refugios/refugios/1
 
 Crear un nuevo refugio (POST) / Actualizar un refugio existente (PUT):
-http://localhost/Backend_Refugios/index.php?route=refugios
-http://localhost/Backend_Refugios/index.php?route=refugios&id=1
+http://localhost/Backend_Refugios/refugios
+http://localhost/Backend_Refugios/refugios/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -102,20 +103,20 @@ http://localhost/Backend_Refugios/index.php?route=refugios&id=1
 ```
 
 Eliminar un refugio:
-http://localhost/Backend_Refugios/index.php?route=refugios&id=1
+http://localhost/Backend_Refugios/refugios/1
 
 ---
 
 2. Módulo: Familias
 Listar todas las familias:
-http://localhost/Backend_Refugios/index.php?route=familias
+http://localhost/Backend_Refugios/familias
 
 Ver una familia específica (por ID):
-http://localhost/Backend_Refugios/index.php?route=familias&id=1
+http://localhost/Backend_Refugios/familias/1
 
 Registrar una nueva familia (POST) / Actualizar datos de una familia (PUT):
-http://localhost/Backend_Refugios/index.php?route=familias
-http://localhost/Backend_Refugios/index.php?route=familias&id=1
+http://localhost/Backend_Refugios/familias
+http://localhost/Backend_Refugios/familias/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -130,20 +131,20 @@ http://localhost/Backend_Refugios/index.php?route=familias&id=1
 ```
 
 Eliminar una familia:
-http://localhost/Backend_Refugios/index.php?route=familias&id=1
+http://localhost/Backend_Refugios/familias/1
 
 ---
 
 3. Módulo: Miembros de Familia
 Listar los miembros de una familia:
-http://localhost/Backend_Refugios/index.php?route=familias/miembros&id_familia=1
+http://localhost/Backend_Refugios/familias/miembros?id_familia=1
 
 Ver un miembro específico:
-http://localhost/Backend_Refugios/index.php?route=familias/miembros&id=1
+http://localhost/Backend_Refugios/familias/miembros/1
 
 Agregar un nuevo miembro (POST) / Actualizar un miembro (PUT):
-http://localhost/Backend_Refugios/index.php?route=familias/miembros
-http://localhost/Backend_Refugios/index.php?route=familias/miembros&id=1
+http://localhost/Backend_Refugios/familias/miembros
+http://localhost/Backend_Refugios/familias/miembros/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -160,20 +161,20 @@ http://localhost/Backend_Refugios/index.php?route=familias/miembros&id=1
 ```
 
 Eliminar un miembro:
-http://localhost/Backend_Refugios/index.php?route=familias/miembros&id=1
+http://localhost/Backend_Refugios/familias/miembros/1
 
 ---
 
 4. Módulo: Usuarios
 Listar todos los usuarios:
-http://localhost/Backend_Refugios/index.php?route=usuarios
+http://localhost/Backend_Refugios/usuarios
 
 Ver un usuario específico:
-http://localhost/Backend_Refugios/index.php?route=usuarios&id=1
+http://localhost/Backend_Refugios/usuarios/1
 
 Crear un nuevo usuario (POST) / Actualizar un usuario (PUT):
-http://localhost/Backend_Refugios/index.php?route=usuarios
-http://localhost/Backend_Refugios/index.php?route=usuarios&id=1
+http://localhost/Backend_Refugios/usuarios
+http://localhost/Backend_Refugios/usuarios/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -185,20 +186,20 @@ http://localhost/Backend_Refugios/index.php?route=usuarios&id=1
 ```
 
 Eliminar un usuario:
-http://localhost/Backend_Refugios/index.php?route=usuarios&id=1
+http://localhost/Backend_Refugios/usuarios/1
 
 ---
 
 5. Módulo: Recursos
 Listar todos los recursos:
-http://localhost/Backend_Refugios/index.php?route=recursos
+http://localhost/Backend_Refugios/recursos
 
 Ver un recurso específico:
-http://localhost/Backend_Refugios/index.php?route=recursos&id=1
+http://localhost/Backend_Refugios/recursos/1
 
 Crear un nuevo recurso (POST) / Actualizar un recurso (PUT):
-http://localhost/Backend_Refugios/index.php?route=recursos
-http://localhost/Backend_Refugios/index.php?route=recursos&id=1
+http://localhost/Backend_Refugios/recursos
+http://localhost/Backend_Refugios/recursos/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -211,20 +212,20 @@ http://localhost/Backend_Refugios/index.php?route=recursos&id=1
 ```
 
 Eliminar un recurso:
-http://localhost/Backend_Refugios/index.php?route=recursos&id=1
+http://localhost/Backend_Refugios/recursos/1
 
 ---
 
 6. Módulo: Donantes
 Listar todos los donantes:
-http://localhost/Backend_Refugios/index.php?route=donantes
+http://localhost/Backend_Refugios/donantes
 
 Ver un donante específico:
-http://localhost/Backend_Refugios/index.php?route=donantes&id=1
+http://localhost/Backend_Refugios/donantes/1
 
 Crear un nuevo donante (POST) / Actualizar un donante (PUT):
-http://localhost/Backend_Refugios/index.php?route=donantes
-http://localhost/Backend_Refugios/index.php?route=donantes&id=1
+http://localhost/Backend_Refugios/donantes
+http://localhost/Backend_Refugios/donantes/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -237,20 +238,20 @@ http://localhost/Backend_Refugios/index.php?route=donantes&id=1
 ```
 
 Eliminar un donante:
-http://localhost/Backend_Refugios/index.php?route=donantes&id=1
+http://localhost/Backend_Refugios/donantes/1
 
 ---
 
 7. Módulo: Donaciones
 Listar todas las donaciones:
-http://localhost/Backend_Refugios/index.php?route=donaciones
+http://localhost/Backend_Refugios/donaciones
 
 Ver una donación específica:
-http://localhost/Backend_Refugios/index.php?route=donaciones&id=1
+http://localhost/Backend_Refugios/donaciones/1
 
 Crear una nueva donación (POST) / Actualizar una donación (PUT):
-http://localhost/Backend_Refugios/index.php?route=donaciones
-http://localhost/Backend_Refugios/index.php?route=donaciones&id=1
+http://localhost/Backend_Refugios/donaciones
+http://localhost/Backend_Refugios/donaciones/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -262,20 +263,20 @@ http://localhost/Backend_Refugios/index.php?route=donaciones&id=1
 ```
 
 Eliminar una donación:
-http://localhost/Backend_Refugios/index.php?route=donaciones&id=1
+http://localhost/Backend_Refugios/donaciones/1
 
 ---
 
 8. Módulo: Entregas
 Listar todas las entregas:
-http://localhost/Backend_Refugios/index.php?route=entregas
+http://localhost/Backend_Refugios/entregas
 
 Ver una entrega específica:
-http://localhost/Backend_Refugios/index.php?route=entregas&id=1
+http://localhost/Backend_Refugios/entregas/1
 
 Crear una nueva entrega (POST) / Actualizar una entrega (PUT):
-http://localhost/Backend_Refugios/index.php?route=entregas
-http://localhost/Backend_Refugios/index.php?route=entregas&id=1
+http://localhost/Backend_Refugios/entregas
+http://localhost/Backend_Refugios/entregas/1
 
 **Ejemplo de JSON (Body):**
 ```json
@@ -289,13 +290,13 @@ http://localhost/Backend_Refugios/index.php?route=entregas&id=1
 ```
 
 Eliminar una entrega:
-http://localhost/Backend_Refugios/index.php?route=entregas&id=1
+http://localhost/Backend_Refugios/entregas/1
 
 ---
 
 9. Módulo: Gestiones
 Realizar peticiones de gestiones y reportes (POST):
-http://localhost/Backend_Refugios/index.php?route=gestiones
+http://localhost/Backend_Refugios/gestiones
 
 **Ejemplo de JSON (Body para POST):**
 ```json
