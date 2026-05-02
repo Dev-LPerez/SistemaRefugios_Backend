@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Ignorar la reescritura si se intenta acceder a una carpeta o archivo real
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+
+    # 2. Rutas compuestas con ID (Ej: /familias/miembros/5)
+    RewriteRule ^(familias/miembros)/([0-9]+)/?$ index.php?route=$1&id=$2 [QSA,L]
+
+    # 3. Rutas compuestas sin ID (Ej: /familias/miembros)
+    RewriteRule ^(familias/miembros)/?$ index.php?route=$1 [QSA,L]
+
+    # 4. Rutas de un solo módulo con ID (Ej: /refugios/1 o /donantes/12)
+    RewriteRule ^([^/]+)/([0-9]+)/?$ index.php?route=$1&id=$2 [QSA,L]
+
+    # 5. Rutas de un solo módulo sin ID (Ej: /refugios o /recursos)
+    RewriteRule ^([^/]+)/?$ index.php?route=$1 [QSA,L]
+</IfModule>
