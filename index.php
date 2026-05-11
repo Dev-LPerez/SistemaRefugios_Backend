@@ -37,6 +37,44 @@ $data = json_decode(file_get_contents("php://input"), true);
 // ==========================================
 // 4. ENRUTADOR PRINCIPAL (Front Controller)
 // ==========================================
+
+// Importar Utils
+require_once 'src/middlewares/AuthMiddleware.php';
+require_once 'src/auditoria/service/AuditoriaService.php';
+require_once 'src/auditoria/entity/LogAuditoria.php';
+
+// Validar y auditar de forma global (Excepto login)
+if ($route !== 'usuarios' || $action !== 'login') {
+    // Definición de Accesos por Ruta
+    $permisos = [
+        'usuarios'   => ['Admin'],
+        'auditoria'  => ['Admin', 'Auditor'],
+        'refugios'   => ['Admin', 'Logistica', 'Operario'],
+        'familias'   => ['Admin', 'Operario', 'Voluntario'],
+        'familias/miembros' => ['Admin', 'Operario', 'Voluntario'],
+        'recursos'   => ['Admin', 'Logistica'],
+        'donantes'   => ['Admin', 'Logistica', 'Operario'],
+        'donaciones' => ['Admin', 'Logistica', 'Operario'],
+        'entregas'   => ['Admin', 'Logistica', 'Operario', 'Voluntario'],
+        'gestiones'  => ['Admin', 'Logistica', 'Operario']
+    ];
+
+    // Chequeo de Roles. Si no está en la lista de permisos asume un rol seguro o lanza error.
+    if (isset($permisos[$route])) {
+        $user = AuthMiddleware::checkRole($permisos[$route]);
+    } else {
+        // En caso de ruta no protegida mapeada que exija login por defecto
+        $user = AuthMiddleware::checkToken();
+    }
+
+    // Auditoría
+    if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
+        $log = new LogAuditoria($user->id_usuario, $method . ($action ? " $action" : ""), $route, $_SERVER['REMOTE_ADDR']);
+        $auditoriaService = new AuditoriaService($db);
+        $auditoriaService->log($log);
+    }
+}
+
 switch ($route) {
     case 'refugios':
         require_once 'src/refugios/controller/RefugioController.php';
@@ -47,7 +85,7 @@ switch ($route) {
     case 'familias':
         require_once 'src/familias/controller/FamiliaController.php';
         $controller = new FamiliaController($db);
-        $controller->handleRequest($method, $data, $id);
+        $controller->handleRequest($method, $data, $id, $action);
         break;
 
     case 'familias/miembros':
@@ -59,7 +97,7 @@ switch ($route) {
     case 'usuarios':
         require_once 'src/usuarios/controller/UsuarioController.php';
         $controller = new UsuarioController($db);
-        $controller->handleRequest($method, $data, $id);
+        $controller->handleRequest($method, $data, $id, $action);
         break;
 
     case 'recursos':
@@ -92,6 +130,12 @@ switch ($route) {
         $controller = new GestionController($db);
         // Nota que aquí no pasamos $id porque no necesitamos buscar/editar una gestión específica
         $controller->handleRequest($method, $data);
+        break;
+
+    case 'auditoria':
+        require_once 'src/auditoria/controller/AuditoriaController.php';
+        $controller = new AuditoriaController($db);
+        $controller->handleRequest($method);
         break;
 
     default:

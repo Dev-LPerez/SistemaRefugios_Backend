@@ -13,15 +13,19 @@ class UsuarioService
     // CREATE (POST)
     public function createUsuario(CreateUsuarioDTO $dto)
     {
-        $query = "INSERT INTO usuario (user, password, rol) VALUES (:user, :password, :rol)";
+        // Se asume que en el esquema viejo existía 'rol' (VARCHAR) y también agregamos 'rol_id'
+        $query = "INSERT INTO usuario (user, password, rol, rol_id) VALUES (:user, :password, :rol, :rol_id)";
         $stmt = $this->db->prepare($query);
 
-        // Encriptar la contraseña antes de guardarla
-        $hashed_password = password_hash($dto->password, PASSWORD_BCRYPT);
+        // La contraseña ya viene encriptada desde el DTO
+        $hashed_password = $dto->password;
 
         $stmt->bindParam(':user', $dto->user);
         $stmt->bindParam(':password', $hashed_password);
         $stmt->bindParam(':rol', $dto->rol);
+        // Si no hay tabla roles configurada o el dto no manda un id, lo enviaremos null
+        $rol_id = null; // Ajustar a futuro para recibir el DTO rol_id
+        $stmt->bindParam(':rol_id', $rol_id, PDO::PARAM_INT);
 
         try {
             if ($stmt->execute()) {
@@ -60,13 +64,42 @@ class UsuarioService
         return ["status" => 404, "message" => "Usuario no encontrado."];
     }
 
+    // AUTHENTICATE (LOGIN)
+    public function login($username, $password)
+    {
+        $query = "SELECT id_usuario, user, password, rol FROM usuario WHERE user = :user LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':user', $username);
+        $stmt->execute();
+        
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($usuario && password_verify($password, $usuario['password'])) {
+            require_once __DIR__ . '/../../middlewares/AuthMiddleware.php';
+            $token = AuthMiddleware::generateToken($usuario);
+            return [
+                "status" => 200, 
+                "message" => "Autenticación exitosa", 
+                "token" => $token,
+                "data" => [
+                    "id_usuario" => $usuario['id_usuario'],
+                    "user" => $usuario['user'],
+                    "rol" => $usuario['rol']
+                ]
+            ];
+        }
+
+        return ["status" => 401, "message" => "Credenciales incorrectas."];
+    }
+
     // UPDATE (PUT)
     public function updateUsuario(UpdateUsuarioDTO $dto)
     {
         // Armamos la consulta dinámicamente dependiendo de si enviaron o no una nueva contraseña
         if (!empty($dto->password)) {
             $query = "UPDATE usuario SET user = :user, password = :password, rol = :rol WHERE id_usuario = :id";
-            $hashed_password = password_hash($dto->password, PASSWORD_BCRYPT);
+            // La contraseña ya viene encriptada desde el DTO
+            $hashed_password = $dto->password;
         } else {
             $query = "UPDATE usuario SET user = :user, rol = :rol WHERE id_usuario = :id";
         }

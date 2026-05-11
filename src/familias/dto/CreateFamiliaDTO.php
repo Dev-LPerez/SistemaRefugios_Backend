@@ -6,24 +6,39 @@ class CreateFamiliaDTO
     public $direccion;
     public $cantidad_miembros;
     public $prioridad;
-    public $id_refugio;
+    public $id_refugio;  // Renombrado lógicamente como refugio_id en DB, en el objeto podemos mapearlo.
+    public $refugio_id;  // Añadido para hacer match exacto de DB
+    public $ubicacion_actual;
+    public $aceptacion_habeas_data;
+    public $cedula;      // Añadido para la validación de duplicidad
 
     public function __construct($data)
     {
+        $this->cedula = $data['cedula'] ?? null;
         $this->representante = $data['representante'] ?? null;
         $this->telefono = $data['telefono'] ?? null;
         $this->direccion = $data['direccion'] ?? null;
         $this->cantidad_miembros = $data['cantidad_miembros'] ?? null;
         $this->prioridad = $data['prioridad'] ?? null;
-        $this->id_refugio = $data['id_refugio'] ?? null;
+        
+        // Soporte retrocompatible y nuevos campos
+        $this->refugio_id = $data['refugio_id'] ?? $data['id_refugio'] ?? null;
+        $this->ubicacion_actual = $data['ubicacion_actual'] ?? 'Vivienda';
+        
+        // Aceptación habeas data (booleano)
+        if (isset($data['aceptacion_habeas_data'])) {
+            $this->aceptacion_habeas_data = filter_var($data['aceptacion_habeas_data'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+        } else {
+            $this->aceptacion_habeas_data = 0;
+        }
     }
 
     public function isValid()
     {
-        return !empty($this->representante) &&
+        // En Fase 2 (offline) es mandatorio el DNI para la validación de duplicados y Habeas Data explícito
+        return !empty($this->cedula) &&
+            !empty($this->representante) &&
             !empty($this->direccion) &&
-            !empty($this->cantidad_miembros) &&
-            !empty($this->prioridad) &&
-            !empty($this->id_refugio);
+            isset($this->aceptacion_habeas_data);
     }
 }

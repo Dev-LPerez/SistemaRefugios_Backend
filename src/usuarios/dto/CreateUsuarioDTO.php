@@ -8,7 +8,7 @@ class CreateUsuarioDTO
     public function __construct($data)
     {
         $this->user = $data['user'] ?? null;
-        $this->password = $data['password'] ?? null;
+        $this->password = isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null;
         $this->rol = $data['rol'] ?? null;
     }
 

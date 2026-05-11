@@ -1,0 +1,44 @@
+1. REQUERIMIENTOS FUNCIONALES (RF)
+Módulo 1: Gestión de Usuarios y Seguridad
+RF-01.01: El sistema debe permitir la creación de diferentes roles de usuario: Administrador (Central), Censista (Campo), Operario de Almacén, Voluntario de Entrega y Auditor (Consulta pública/Transparencia).
+RF-01.02: El sistema debe autenticar a los usuarios mediante credenciales seguras (correo/usuario y contraseña).
+Módulo 2: Registro Único de Damnificados (Censo)
+RF-02.01: El sistema debe permitir registrar a la "Cabeza de Familia" utilizando su número de Cédula de Ciudadanía como identificador único.
+RF-02.02: El sistema debe permitir asociar miembros dependientes al núcleo familiar, especificando edad y relación.
+RF-02.03: El sistema debe incluir casillas de verificación (checkbox) para marcar condiciones de vulnerabilidad especial: Niños, Adultos Mayores, Mujeres Embarazadas y Personas con Discapacidad.
+RF-02.04: El sistema debe registrar la ubicación actual de la familia, diferenciando si están en "Refugio Temporal" (y cuál de ellos) o en su "Vivienda Afectada".
+RF-02.05: El sistema debe detectar y bloquear automáticamente el registro de un documento de identidad que ya se encuentre ingresado en la base de datos (evitar duplicidad desde el origen).
+Módulo 3: Gestión de Inventario y Almacén (Capacidad: 20.000 kg)
+RF-03.01: El sistema debe permitir registrar la entrada de recursos, clasificándolos por categoría (Alimentos no perecederos, Cobijas, Colchonetas, Elementos de aseo).
+RF-03.02: El sistema debe exigir que cada entrada registre su origen/donante (Alcaldía, Gobernación, Empresa Privada, Ciudadano, ONG).
+RF-03.03: El sistema debe calcular y mostrar el stock disponible en tiempo real, reflejando el peso en kilogramos y unidades.
+RF-03.04: El sistema debe emitir una alerta visual cuando la capacidad del almacén se acerque a los 20.000 kg (límite físico) o cuando un insumo básico llegue a un nivel crítico de desabastecimiento.
+Módulo 4: Motor de Priorización y Asignación
+RF-04.01: El sistema debe ejecutar un algoritmo que calcule la "Ración de Supervivencia" por familia, asegurando una cantidad mínima de calorías/alimentos para al menos 3 días, multiplicada por el número de integrantes.
+RF-04.02: El sistema debe asignar un Puntaje de Prioridad automático a cada familia según sus vulnerabilidades (ej. +10 por embarazada, +5 por niño).
+RF-04.03: El sistema debe generar "Listas de Despacho" diarias ordenadas de mayor a menor puntaje de prioridad, cruzadas con la disponibilidad actual del inventario.
+Módulo 5: Despacho, Logística y Entregas
+RF-05.01: El sistema debe permitir la búsqueda rápida de una familia en el punto de entrega mediante el número de cédula o el escaneo de un código QR generado por el sistema.
+RF-05.02: El sistema debe validar en tiempo real si la familia ya recibió su kit de 3 días. Si es así, debe bloquear la entrega y mostrar la fecha/hora y el punto donde se realizó la entrega anterior.
+RF-05.03: El sistema debe descontar automáticamente del inventario los recursos entregados una vez el Voluntario confirme la entrega en la plataforma.
+Módulo 6: Trazabilidad y Reportes
+RF-06.01: El sistema debe generar un reporte de "Origen y Destino" que muestre exactamente qué familias recibieron los recursos donados por un ente específico (ej. "Aportes de la Gobernación").
+RF-06.02: El sistema debe mostrar estadísticas gráficas: % de damnificados atendidos y pendientes, distribución poblacional en refugios y estado del censo.
+2. REQUERIMIENTOS NO FUNCIONALES (RNF)
+RNF 1: Arquitectura y Tecnologías
+RNF-01.01: El backend del sistema debe estar desarrollado en el lenguaje PHP (se sugiere el framework Laravel para garantizar estructura MVC, seguridad y robustez API REST).
+RNF-01.02: La base de datos debe ser relacional (MySQL o PostgreSQL) para garantizar la integridad referencial entre familias, donaciones y entregas.
+RNF-01.03: El frontend debe implementarse como una Aplicación Web Progresiva (PWA) utilizando tecnologías modernas (HTML5, CSS3, JS / Angular o React).
+RNF 2: Disponibilidad y Conectividad (Modo Offline)
+RNF-02.01: La interfaz de Censo (Frontend PWA) debe tener capacidad de funcionamiento Offline. Los censistas en zonas aisladas deben poder registrar familias sin conexión a internet; el sistema guardará los datos en la memoria local del dispositivo (Local Storage/IndexedDB).
+RNF-02.02: El sistema debe sincronizar automáticamente los datos locales con la base de datos central en PHP en cuanto el dispositivo recupere la conexión a internet.
+RNF 3: Rendimiento y Escalabilidad
+RNF-03.01: El sistema debe estar preparado para soportar el registro de hasta 50.000 individuos (aprox. 12.000 familias) sin degradación notable del rendimiento.
+RNF-03.02: Las consultas de validación de entrega (para evitar duplicidad) en los puntos de distribución deben tener un tiempo de respuesta menor a 2 segundos.
+RNF 4: Usabilidad e Interfaz
+RNF-04.01: El sistema debe tener un diseño Mobile-First (100% responsive), dado que el 90% de la operación de censistas y voluntarios se realizará desde teléfonos móviles (smartphones) en el terreno.
+RNF-04.02: La interfaz debe ser altamente intuitiva, requiriendo menos de 1 hora de capacitación para que un voluntario aprenda a censar o registrar una entrega.
+RNF 5: Seguridad y Legalidad
+RNF-05.01: El sistema debe cumplir con la Ley Estatutaria 1581 de 2012 de Colombia sobre Protección de Datos Personales (Habeas Data), incluyendo un aviso de privacidad al momento del censo.
+RNF-05.02: Las contraseñas de los usuarios deben estar encriptadas (hashing) en la base de datos (ej. bcrypt).
+RNF-05.03: Todas las transacciones (censos, entradas de inventario, entregas) deben guardar un log de auditoría (timestamp, usuario que realizó la acción y dirección IP).

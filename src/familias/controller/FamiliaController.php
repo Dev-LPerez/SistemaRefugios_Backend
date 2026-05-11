@@ -12,7 +12,7 @@ class FamiliaController
         $this->service = new FamiliaService($db);
     }
 
-    public function handleRequest($method, $data, $id = null)
+    public function handleRequest($method, $data, $id = null, $action = null)
     {
         switch ($method) {
             case 'GET':
@@ -25,12 +25,21 @@ class FamiliaController
                 break;
 
             case 'POST':
-                $dto = new CreateFamiliaDTO($data);
-                if (!$dto->isValid()) {
-                    $this->sendResponse(["status" => 400, "error" => "Faltan datos obligatorios para crear la familia"]);
-                    return;
+                if ($action === 'sync') {
+                    // Esperamos que $data sea un arreglo de familias
+                    if (!is_array($data) || empty($data)) {
+                        $this->sendResponse(["status" => 400, "error" => "Se requiere un arreglo de datos para sincronización"]);
+                        return;
+                    }
+                    $response = $this->service->syncMasivo($data);
+                } else {
+                    $dto = new CreateFamiliaDTO($data);
+                    if (!$dto->isValid()) {
+                        $this->sendResponse(["status" => 400, "error" => "Faltan datos obligatorios para crear la familia (Cédula y Habeas Data requeridos)"]);
+                        return;
+                    }
+                    $response = $this->service->createFamilia($dto);
                 }
-                $response = $this->service->createFamilia($dto);
                 $this->sendResponse($response);
                 break;
 

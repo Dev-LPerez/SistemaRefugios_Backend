@@ -12,7 +12,7 @@ class UsuarioController
         $this->service = new UsuarioService($db);
     }
 
-    public function handleRequest($method, $data, $id = null)
+    public function handleRequest($method, $data, $id = null, $action = null)
     {
         switch ($method) {
             case 'GET':
@@ -25,12 +25,25 @@ class UsuarioController
                 break;
 
             case 'POST':
-                $dto = new CreateUsuarioDTO($data);
-                if (!$dto->isValid()) {
-                    $this->sendResponse(["status" => 400, "error" => "Faltan datos obligatorios (user, password, rol)"]);
+                if ($action === 'login') {
+                    if (empty($data['user']) || empty($data['password'])) {
+                        $this->sendResponse(["status" => 400, "error" => "Faltan credenciales (user, password)"]);
+                        return;
+                    }
+                    $response = $this->service->login($data['user'], $data['password']);
+                } else if ($action === 'logout') {
+                    // Para JWT, el logout normalmente se maneja eliminando el token del lado del cliente
+                    // Pero proveemos el endpoint por completitud
+                    $this->sendResponse(["status" => 200, "message" => "Logout exitoso. Descarte el token en el cliente."]);
                     return;
+                } else {
+                    $dto = new CreateUsuarioDTO($data);
+                    if (!$dto->isValid()) {
+                        $this->sendResponse(["status" => 400, "error" => "Faltan datos obligatorios (user, password, rol)"]);
+                        return;
+                    }
+                    $response = $this->service->createUsuario($dto);
                 }
-                $response = $this->service->createUsuario($dto);
                 $this->sendResponse($response);
                 break;
 
