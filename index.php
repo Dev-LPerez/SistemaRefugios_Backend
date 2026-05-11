@@ -103,7 +103,7 @@ switch ($route) {
     case 'recursos':
         require_once 'src/recursos/controller/RecursoController.php';
         $controller = new RecursoController($db);
-        $controller->handleRequest($method, $data, $id);
+        $controller->handleRequest($method, $data, $id, $action);
         break;
 
     case 'donantes':

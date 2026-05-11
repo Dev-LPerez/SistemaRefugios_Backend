@@ -13,14 +13,16 @@ class RecursoService
     // CREATE (POST)
     public function createRecurso(CreateRecursoDTO $dto)
     {
-        $query = "INSERT INTO recursos (nombre, tipo, unidad, cantidad_disponible) 
-                  VALUES (:nombre, :tipo, :unidad, :cantidad_disponible)";
+        $query = "INSERT INTO recursos (nombre, tipo, unidad, cantidad_disponible, categoria, stock) 
+                  VALUES (:nombre, :tipo, :unidad, :cantidad_disponible, :categoria, :stock)";
         $stmt = $this->db->prepare($query);
 
         $stmt->bindParam(':nombre', $dto->nombre);
         $stmt->bindParam(':tipo', $dto->tipo);
         $stmt->bindParam(':unidad', $dto->unidad);
         $stmt->bindParam(':cantidad_disponible', $dto->cantidad_disponible);
+        $stmt->bindParam(':categoria', $dto->categoria);
+        $stmt->bindParam(':stock', $dto->stock);
 
         if ($stmt->execute()) {
             return ["status" => 201, "message" => "Recurso creado exitosamente."];
@@ -57,7 +59,8 @@ class RecursoService
     public function updateRecurso(UpdateRecursoDTO $dto)
     {
         $query = "UPDATE recursos 
-                  SET nombre = :nombre, tipo = :tipo, unidad = :unidad, cantidad_disponible = :cantidad_disponible 
+                  SET nombre = :nombre, tipo = :tipo, unidad = :unidad, 
+                      cantidad_disponible = :cantidad_disponible, categoria = :categoria, stock = :stock
                   WHERE id_recurso = :id";
 
         $stmt = $this->db->prepare($query);
@@ -65,6 +68,8 @@ class RecursoService
         $stmt->bindParam(':tipo', $dto->tipo);
         $stmt->bindParam(':unidad', $dto->unidad);
         $stmt->bindParam(':cantidad_disponible', $dto->cantidad_disponible);
+        $stmt->bindParam(':categoria', $dto->categoria);
+        $stmt->bindParam(':stock', $dto->stock);
         $stmt->bindParam(':id', $dto->id_recurso, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
@@ -74,6 +79,43 @@ class RecursoService
             return ["status" => 404, "message" => "Recurso no encontrado o sin cambios."];
         }
         return ["status" => 500, "message" => "Error al actualizar el recurso."];
+    }
+
+    // RF-03.03 Alertas de Stock -> devuelve artículos cuyo stock < 10
+    public function getAlertasStock()
+    {
+        // Se asume un umbral crítico de 10 unidades/kg
+        $query = "SELECT id_recurso, nombre, tipo, unidad, stock, cantidad_disponible 
+                  FROM recursos 
+                  WHERE (stock < 10) OR (stock IS NULL AND cantidad_disponible < 10)";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $mensaje = empty($resultados) ? "Stock saludable." : "Atención: Hay recursos con stock crítico.";
+        
+        return [
+            "status" => 200, 
+            "message" => $mensaje, 
+            "data" => $resultados
+        ];
+    }
+    
+    // Calcula el total general actual
+    public function getStockReal()
+    {
+        $query = "SELECT SUM(COALESCE(stock, cantidad_disponible, 0)) as total_almacen, COUNT(id_recurso) as total_items FROM recursos";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return [
+            "status" => 200, 
+            "data" => [
+                "total_kilos_unidades" => $resultado['total_almacen'],
+                "tipos_de_recurso" => $resultado['total_items']
+            ]
+        ];
     }
 
     // DELETE (DELETE)

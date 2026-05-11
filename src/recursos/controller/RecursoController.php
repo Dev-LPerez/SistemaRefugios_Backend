@@ -12,11 +12,15 @@ class RecursoController
         $this->service = new RecursoService($db);
     }
 
-    public function handleRequest($method, $data, $id = null)
+    public function handleRequest($method, $data, $id = null, $action = null)
     {
         switch ($method) {
             case 'GET':
-                if ($id) {
+                if ($action === 'alertas') {
+                    $response = $this->service->getAlertasStock();
+                } elseif ($action === 'stock-real') {
+                    $response = $this->service->getStockReal();
+                } elseif ($id) {
                     $response = $this->service->getRecursoById($id);
                 } else {
                     $response = $this->service->getAllRecursos();
