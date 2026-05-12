@@ -56,7 +56,8 @@ if ($route !== 'usuarios' || $action !== 'login') {
         'donantes'   => ['Admin', 'Logistica', 'Operario'],
         'donaciones' => ['Admin', 'Logistica', 'Operario'],
         'entregas'   => ['Admin', 'Logistica', 'Operario', 'Voluntario'],
-        'gestiones'  => ['Admin', 'Logistica', 'Operario']
+        'gestiones'  => ['Admin', 'Logistica', 'Operario'],
+        'priorizacion' => ['Admin', 'Logistica', 'Operario']
     ];
 
     // Chequeo de Roles. Si no está en la lista de permisos asume un rol seguro o lanza error.
@@ -130,6 +131,12 @@ switch ($route) {
         $controller = new GestionController($db);
         // Nota que aquí no pasamos $id porque no necesitamos buscar/editar una gestión específica
         $controller->handleRequest($method, $data);
+        break;
+
+    case 'priorizacion':
+        require_once 'src/priorizacion/controller/PriorizacionController.php';
+        $controller = new PriorizacionController($db);
+        $controller->handleRequest($method, $action, $id_familia);
         break;
 
     case 'auditoria':
