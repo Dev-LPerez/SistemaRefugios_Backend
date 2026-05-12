@@ -80,6 +80,21 @@ class FamiliaService
         return ["status" => 404, "message" => "Familia no encontrada."];
     }
 
+    // BUSQUEDA AGIL (GET /search)
+    public function searchFamilia($q)
+    {
+        $query = "SELECT * FROM familias 
+                  WHERE cedula LIKE :q OR representante LIKE :q 
+                  LIMIT 20";
+        $stmt = $this->db->prepare($query);
+        $searchParam = "%{$q}%";
+        $stmt->bindParam(':q', $searchParam);
+        $stmt->execute();
+        
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return ["status" => 200, "data" => $resultados];
+    }
+
     // UPDATE (PUT)
     public function updateFamilia(UpdateFamiliaDTO $dto)
     {

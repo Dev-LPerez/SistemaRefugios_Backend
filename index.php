@@ -57,7 +57,8 @@ if ($route !== 'usuarios' || $action !== 'login') {
         'donaciones' => ['Admin', 'Logistica', 'Operario'],
         'entregas'   => ['Admin', 'Logistica', 'Operario', 'Voluntario'],
         'gestiones'  => ['Admin', 'Logistica', 'Operario'],
-        'priorizacion' => ['Admin', 'Logistica', 'Operario']
+        'priorizacion' => ['Admin', 'Logistica', 'Operario'],
+        'reportes'   => ['Admin', 'Auditor', 'Logistica', 'Operario']
     ];
 
     // Chequeo de Roles. Si no está en la lista de permisos asume un rol seguro o lanza error.
@@ -137,6 +138,12 @@ switch ($route) {
         require_once 'src/priorizacion/controller/PriorizacionController.php';
         $controller = new PriorizacionController($db);
         $controller->handleRequest($method, $action, $id_familia);
+        break;
+
+    case 'reportes':
+        require_once 'src/reportes/controller/ReporteController.php';
+        $controller = new ReporteController($db);
+        $controller->handleRequest($method, $action);
         break;
 
     case 'auditoria':

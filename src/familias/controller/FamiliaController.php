@@ -16,7 +16,14 @@ class FamiliaController
     {
         switch ($method) {
             case 'GET':
-                if ($id) {
+                if ($action === 'search') {
+                    $q = $_GET['q'] ?? '';
+                    if (empty($q)) {
+                        $this->sendResponse(["status" => 400, "error" => "Parámetro 'q' es requerido para la búsqueda"]);
+                        return;
+                    }
+                    $response = $this->service->searchFamilia($q);
+                } elseif ($id) {
                     $response = $this->service->getFamiliaById($id);
                 } else {
                     $response = $this->service->getAllFamilias();

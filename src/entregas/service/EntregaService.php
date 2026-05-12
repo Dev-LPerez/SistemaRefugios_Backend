@@ -10,11 +10,37 @@ class EntregaService
         $this->db = $dbConnection;
     }
 
+    // Regla de 72 Horas (RF-05.02)
+    public function checkUltimaEntrega($id_familia)
+    {
+        $query = "SELECT fecha FROM detalle_entrega 
+                  WHERE id_familia = :id_familia 
+                  ORDER BY fecha DESC LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id_familia', $id_familia, PDO::PARAM_INT);
+        $stmt->execute();
+        $ultima = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($ultima) {
+            $fechaUltima = new DateTime($ultima['fecha']);
+            $fechaActual = new DateTime();
+            $diferencia = $fechaActual->diff($fechaUltima);
+            
+            if ($diferencia->days < 3) {
+                throw new Exception("Bloqueo de seguridad: La familia recibió apoyo hace menos de 72 horas (última entrega: " . $ultima['fecha'] . ").");
+            }
+        }
+        return true;
+    }
+
     // CREATE (POST) - Transaccional con validación de inventario
     public function createEntrega(CreateEntregaDTO $dto)
     {
         try {
             $this->db->beginTransaction();
+
+            // 0. Validar la regla de restricción de 3 días
+            $this->checkUltimaEntrega($dto->id_familia);
 
             // 1. Verificar si hay suficiente inventario
             $queryStock = "SELECT cantidad_disponible, nombre FROM recursos WHERE id_recurso = :id_recurso FOR UPDATE";
@@ -43,7 +69,7 @@ class EntregaService
             $stmtInsert->execute();
 
             // 3. Descontar del inventario
-            $queryUpdate = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :cantidad WHERE id_recurso = :id_recurso";
+            $queryUpdate = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :cantidad, stock = IFNULL(stock, 0) - :cantidad WHERE id_recurso = :id_recurso";
             $stmtUpdate = $this->db->prepare($queryUpdate);
             $stmtUpdate->bindParam(':cantidad', $dto->cantidad);
             $stmtUpdate->bindParam(':id_recurso', $dto->id_recurso, PDO::PARAM_INT);
@@ -54,9 +80,10 @@ class EntregaService
 
         } catch (Exception $e) {
             $this->db->rollBack();
-            // Determinamos si el error es de stock (lanzado por nosotros) o de BD (llaves foráneas)
-            $status = strpos($e->getMessage(), 'Stock') !== false ? 400 : 500;
-            return ["status" => $status, "message" => "Error al procesar la entrega.", "error" => $e->getMessage()];
+            // Determinamos si el error es de stock o bloqueo de entregas
+            $errorMsg = $e->getMessage();
+            $status = (strpos($errorMsg, 'Stock') !== false || strpos($errorMsg, 'Bloqueo') !== false) ? 400 : 500;
+            return ["status" => $status, "message" => "Error al procesar la entrega.", "error" => $errorMsg];
         }
     }
 
@@ -67,7 +94,7 @@ class EntregaService
                          f.representante AS familia_representante, 
                          r.nombre AS recurso_nombre, r.unidad 
                   FROM detalle_entrega de
-                  JOIN familia f ON de.id_familia = f.id_familia
+                  JOIN familias f ON de.id_familia = f.id_familia
                   JOIN recursos r ON de.id_recurso = r.id_recurso
                   ORDER BY de.fecha DESC";
         $stmt = $this->db->prepare($query);
