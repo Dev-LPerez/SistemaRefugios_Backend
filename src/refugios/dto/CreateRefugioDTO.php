@@ -2,18 +2,20 @@
 class CreateRefugioDTO
 {
     public $nombre;
-    public $ubicacion;
-    public $capacidad;
+    public $direccion;
+    public $capacidad_maxima;
+    public $estado;
 
     public function __construct($data)
     {
         $this->nombre = $data['nombre'] ?? null;
-        $this->ubicacion = $data['ubicacion'] ?? null;
-        $this->capacidad = $data['capacidad'] ?? null;
+        $this->direccion = $data['direccion'] ?? null;
+        $this->capacidad_maxima = $data['capacidad_maxima'] ?? null;
+        $this->estado = $data['estado'] ?? 'activo'; // Por defecto será 'activo'
     }
 
     public function isValid()
     {
-        return !empty($this->nombre) && !empty($this->ubicacion) && !empty($this->capacidad);
+        return !empty($this->nombre) && !empty($this->direccion) && !empty($this->capacidad_maxima);
     }
 }

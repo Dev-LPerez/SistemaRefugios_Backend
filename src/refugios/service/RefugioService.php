@@ -13,11 +13,13 @@ class RefugioService
     // CREATE (POST)
     public function createRefugio(CreateRefugioDTO $dto)
     {
-        $query = "INSERT INTO refugio (nombre, ubicacion, capacidad) VALUES (:nombre, :ubicacion, :capacidad)";
+        $query = "INSERT INTO refugios (nombre, direccion, capacidad_maxima, ocupacion_actual, estado) 
+                  VALUES (:nombre, :direccion, :capacidad_maxima, 0, :estado)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':nombre', $dto->nombre);
-        $stmt->bindParam(':ubicacion', $dto->ubicacion);
-        $stmt->bindParam(':capacidad', $dto->capacidad);
+        $stmt->bindParam(':direccion', $dto->direccion);
+        $stmt->bindParam(':capacidad_maxima', $dto->capacidad_maxima, PDO::PARAM_INT);
+        $stmt->bindParam(':estado', $dto->estado);
 
         if ($stmt->execute()) {
             return ["status" => 201, "message" => "Refugio creado exitosamente."];
@@ -28,7 +30,7 @@ class RefugioService
     // READ ALL (GET)
     public function getAllRefugios()
     {
-        $query = "SELECT * FROM refugio";
+        $query = "SELECT * FROM refugios";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -38,7 +40,7 @@ class RefugioService
     // READ ONE (GET por ID)
     public function getRefugioById($id)
     {
-        $query = "SELECT * FROM refugio WHERE id_refugio = :id LIMIT 1";
+        $query = "SELECT * FROM refugios WHERE id_refugio = :id LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -53,13 +55,21 @@ class RefugioService
     // UPDATE (PUT)
     public function updateRefugio(UpdateRefugioDTO $dto)
     {
-        // En un escenario real, validaríamos qué campos vienen llenos para hacer un UPDATE dinámico. 
-        // Para simplificar, asumimos que se envían todos los campos a actualizar.
-        $query = "UPDATE refugio SET nombre = :nombre, ubicacion = :ubicacion, capacidad = :capacidad WHERE id_refugio = :id";
+        // En un escenario real idealmente hacemos update dinámico, aquí pasaremos todo tal cual está actualmente.
+        $query = "UPDATE refugios SET 
+                    nombre = :nombre, 
+                    direccion = :direccion, 
+                    capacidad_maxima = :capacidad_maxima, 
+                    ocupacion_actual = :ocupacion_actual, 
+                    estado = :estado 
+                  WHERE id_refugio = :id";
+                  
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':nombre', $dto->nombre);
-        $stmt->bindParam(':ubicacion', $dto->ubicacion);
-        $stmt->bindParam(':capacidad', $dto->capacidad);
+        $stmt->bindParam(':direccion', $dto->direccion);
+        $stmt->bindParam(':capacidad_maxima', $dto->capacidad_maxima, PDO::PARAM_INT);
+        $stmt->bindParam(':ocupacion_actual', $dto->ocupacion_actual, PDO::PARAM_INT);
+        $stmt->bindParam(':estado', $dto->estado);
         $stmt->bindParam(':id', $dto->id_refugio, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
@@ -74,7 +84,7 @@ class RefugioService
     // DELETE (DELETE)
     public function deleteRefugio($id)
     {
-        $query = "DELETE FROM refugio WHERE id_refugio = :id";
+        $query = "DELETE FROM refugios WHERE id_refugio = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
@@ -86,7 +96,6 @@ class RefugioService
                 return ["status" => 404, "message" => "Refugio no encontrado."];
             }
         } catch (PDOException $e) {
-            // Manejo de error si intentas borrar un refugio que ya tiene familias asignadas (Error de llave foránea)
             return ["status" => 409, "message" => "No se puede eliminar: El refugio está en uso."];
         }
         return ["status" => 500, "message" => "Error al eliminar el refugio."];
