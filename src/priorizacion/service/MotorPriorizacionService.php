@@ -13,11 +13,12 @@ class MotorPriorizacionService
 
     /**
      * RF-04.02: Algoritmo de Puntaje de Prioridad
-     * Barema a las familias basándose en sus integrantes y vulnerabilidades
+     * Barema a las familias basándose en sus integrantes y vulnerabilidades exactas
      */
     public function calcularPuntajePrioridad($id_familia)
     {
-        $query = "SELECT m.edad, m.vulnerable, m.tipo_vulnerabilidad 
+        // Se añadieron las columnas de vulnerabilidad explícitas a la consulta
+        $query = "SELECT m.edad, m.vulnerable, m.es_embarazada, m.tiene_discapacidad, m.enfermedad_cronica 
                   FROM miembros m 
                   WHERE m.id_familia = :id_familia";
         $stmt = $this->db->prepare($query);
@@ -29,27 +30,42 @@ class MotorPriorizacionService
         $puntajeTotal = 10; // Solo por ser familia damnificada
 
         foreach ($miembros as $miembro) {
-            // Bonificación por menores de 5 años
+            // Bonificación por primera infancia (Acorde a configuracion_prioridades: 15 pts)
             if (isset($miembro['edad']) && $miembro['edad'] < 5) {
-                $puntajeTotal += 5;
+                $puntajeTotal += 15;
             }
-            // Bonificación por tercera edad
+            
+            // Bonificación por tercera edad (Acorde a configuracion_prioridades: 15 pts)
             if (isset($miembro['edad']) && $miembro['edad'] > 65) {
-                $puntajeTotal += 5;
+                $puntajeTotal += 15;
             }
-            // Bonificación por vulnerabilidad especial (Embarazo, Discapacidad, etc.)
-            if ($miembro['vulnerable'] == 1 || $miembro['vulnerable'] === true) {
+            
+            // Evaluaciones Booleanas Exactas
+            if ($miembro['es_embarazada'] == 1) {
+                $puntajeTotal += 20;
+            }
+            if ($miembro['tiene_discapacidad'] == 1) {
+                $puntajeTotal += 20;
+            }
+            if ($miembro['enfermedad_cronica'] == 1) {
                 $puntajeTotal += 10;
+            }
+
+            // Mantenemos una pequeña bonificación si está marcado como vulnerable genérico,
+            // pero no encaja en ninguna de las categorías anteriores.
+            if (($miembro['vulnerable'] == 1 || $miembro['vulnerable'] === true) && 
+                $miembro['es_embarazada'] == 0 && 
+                $miembro['tiene_discapacidad'] == 0 && 
+                $miembro['enfermedad_cronica'] == 0) {
+                $puntajeTotal += 5;
             }
         }
 
-        // Se guarda o simplemente se devuelve
         return $puntajeTotal;
     }
 
     /**
      * RF-04.01: Algoritmo "Ración de Supervivencia" (Kits para 3 días)
-     * Por persona calculamos: 6 Litros de agua y 4.5 KG de alimentos
      */
     public function calcularRacionSupervivencia($cantidad_miembros)
     {
@@ -69,7 +85,6 @@ class MotorPriorizacionService
 
     /**
      * RF-04.03: Generador de Listas de Despacho
-     * Lista de familias ordenadas por prioridad incluyendo la ración teórica
      */
     public function generarDespachos()
     {

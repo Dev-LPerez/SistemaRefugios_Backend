@@ -12,8 +12,15 @@ class MiembroService
 
     public function createMiembro(CreateMiembroDTO $dto)
     {
-        $query = "INSERT INTO miembros (nombre, edad, parentezco, tipo_documento, numero_documento, vulnerable, tipo_vulnerabilidad, id_familia) 
-                  VALUES (:nombre, :edad, :parentezco, :tipo_documento, :numero_documento, :vulnerable, :tipo_vulnerabilidad, :id_familia)";
+        $query = "INSERT INTO miembros (
+                    nombre, edad, parentezco, tipo_documento, numero_documento, 
+                    vulnerable, tipo_vulnerabilidad, id_familia,
+                    es_embarazada, tiene_discapacidad, enfermedad_cronica
+                  ) VALUES (
+                    :nombre, :edad, :parentezco, :tipo_documento, :numero_documento, 
+                    :vulnerable, :tipo_vulnerabilidad, :id_familia,
+                    :es_embarazada, :tiene_discapacidad, :enfermedad_cronica
+                  )";
         $stmt = $this->db->prepare($query);
 
         $stmt->bindParam(':nombre', $dto->nombre);
@@ -24,13 +31,18 @@ class MiembroService
         $stmt->bindParam(':vulnerable', $dto->vulnerable, PDO::PARAM_INT);
         $stmt->bindParam(':tipo_vulnerabilidad', $dto->tipo_vulnerabilidad);
         $stmt->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
+        
+        // Bind de los nuevos campos booleanos
+        $stmt->bindParam(':es_embarazada', $dto->es_embarazada, PDO::PARAM_INT);
+        $stmt->bindParam(':tiene_discapacidad', $dto->tiene_discapacidad, PDO::PARAM_INT);
+        $stmt->bindParam(':enfermedad_cronica', $dto->enfermedad_cronica, PDO::PARAM_INT);
 
         try {
             if ($stmt->execute()) {
                 return ["status" => 201, "message" => "Miembro registrado exitosamente."];
             }
         } catch (PDOException $e) {
-            return ["status" => 400, "message" => "Error de BD: Asegúrate de que el id_familia exista."];
+            return ["status" => 400, "message" => "Error de BD: Asegúrate de que el id_familia exista. Detalle: " . $e->getMessage()];
         }
         return ["status" => 500, "message" => "Error al registrar el miembro."];
     }
@@ -46,7 +58,6 @@ class MiembroService
         return $miembro ? ["status" => 200, "data" => $miembro] : ["status" => 404, "message" => "Miembro no encontrado."];
     }
 
-    // Nuevo método: Traer todos los miembros que pertenecen a una familia específica
     public function getMiembrosByFamilia($id_familia)
     {
         $query = "SELECT * FROM miembros WHERE id_familia = :id_familia";
@@ -58,12 +69,13 @@ class MiembroService
         return ["status" => 200, "data" => $resultados];
     }
 
-    public function updateMiembro(UpdateMiembroDTO $dto)
+    public function updateMiembro($dto) // Puedes tiparlo con UpdateMiembroDTO si ya lo tienes listo con los campos
     {
         $query = "UPDATE miembros 
                   SET nombre = :nombre, edad = :edad, parentezco = :parentezco, 
                       tipo_documento = :tipo_documento, numero_documento = :numero_documento, 
-                      vulnerable = :vulnerable, tipo_vulnerabilidad = :tipo_vulnerabilidad, id_familia = :id_familia 
+                      vulnerable = :vulnerable, tipo_vulnerabilidad = :tipo_vulnerabilidad, id_familia = :id_familia,
+                      es_embarazada = :es_embarazada, tiene_discapacidad = :tiene_discapacidad, enfermedad_cronica = :enfermedad_cronica
                   WHERE id_persona = :id";
 
         $stmt = $this->db->prepare($query);
@@ -75,6 +87,12 @@ class MiembroService
         $stmt->bindParam(':vulnerable', $dto->vulnerable, PDO::PARAM_INT);
         $stmt->bindParam(':tipo_vulnerabilidad', $dto->tipo_vulnerabilidad);
         $stmt->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
+        
+        // Bind de los nuevos campos booleanos
+        $stmt->bindParam(':es_embarazada', $dto->es_embarazada, PDO::PARAM_INT);
+        $stmt->bindParam(':tiene_discapacidad', $dto->tiene_discapacidad, PDO::PARAM_INT);
+        $stmt->bindParam(':enfermedad_cronica', $dto->enfermedad_cronica, PDO::PARAM_INT);
+        
         $stmt->bindParam(':id', $dto->id_persona, PDO::PARAM_INT);
 
         try {

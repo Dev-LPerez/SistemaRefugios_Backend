@@ -14,7 +14,7 @@ class UsuarioService
     public function createUsuario(CreateUsuarioDTO $dto)
     {
         // Se asume que en el esquema viejo existía 'rol' (VARCHAR) y también agregamos 'rol_id'
-        $query = "INSERT INTO usuario (user, password, rol, rol_id) VALUES (:user, :password, :rol, :rol_id)";
+        $query = "INSERT INTO usuarios (user, password, rol) VALUES (:user, :password, :rol)";
         $stmt = $this->db->prepare($query);
 
         // La contraseña ya viene encriptada desde el DTO
@@ -23,9 +23,6 @@ class UsuarioService
         $stmt->bindParam(':user', $dto->user);
         $stmt->bindParam(':password', $hashed_password);
         $stmt->bindParam(':rol', $dto->rol);
-        // Si no hay tabla roles configurada o el dto no manda un id, lo enviaremos null
-        $rol_id = null; // Ajustar a futuro para recibir el DTO rol_id
-        $stmt->bindParam(':rol_id', $rol_id, PDO::PARAM_INT);
 
         try {
             if ($stmt->execute()) {
@@ -42,7 +39,7 @@ class UsuarioService
     public function getAllUsuarios()
     {
         // Excluimos la contraseña en el SELECT por seguridad
-        $query = "SELECT id_usuario, user, rol FROM usuario";
+        $query = "SELECT id_usuario, user, rol FROM usuarios";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -52,7 +49,7 @@ class UsuarioService
     // READ ONE (GET por ID)
     public function getUsuarioById($id)
     {
-        $query = "SELECT id_usuario, user, rol FROM usuario WHERE id_usuario = :id LIMIT 1";
+        $query = "SELECT id_usuario, user, rol FROM usuarios WHERE id_usuario = :id LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -67,7 +64,7 @@ class UsuarioService
     // AUTHENTICATE (LOGIN)
     public function login($username, $password)
     {
-        $query = "SELECT id_usuario, user, password, rol FROM usuario WHERE user = :user LIMIT 1";
+        $query = "SELECT id_usuario, user, password, rol FROM usuarios WHERE user = :user LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':user', $username);
         $stmt->execute();
@@ -97,11 +94,11 @@ class UsuarioService
     {
         // Armamos la consulta dinámicamente dependiendo de si enviaron o no una nueva contraseña
         if (!empty($dto->password)) {
-            $query = "UPDATE usuario SET user = :user, password = :password, rol = :rol WHERE id_usuario = :id";
+            $query = "UPDATE usuarios SET user = :user, password = :password, rol = :rol WHERE id_usuario = :id";
             // La contraseña ya viene encriptada desde el DTO
             $hashed_password = $dto->password;
         } else {
-            $query = "UPDATE usuario SET user = :user, rol = :rol WHERE id_usuario = :id";
+            $query = "UPDATE usuarios SET user = :user, rol = :rol WHERE id_usuario = :id";
         }
 
         $stmt = $this->db->prepare($query);
@@ -129,7 +126,7 @@ class UsuarioService
     // DELETE (DELETE)
     public function deleteUsuario($id)
     {
-        $query = "DELETE FROM usuario WHERE id_usuario = :id";
+        $query = "DELETE FROM usuarios WHERE id_usuario = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 

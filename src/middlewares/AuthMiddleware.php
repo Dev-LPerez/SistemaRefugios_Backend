@@ -5,7 +5,7 @@ use \Firebase\JWT\Key;
 
 class AuthMiddleware
 {
-    private static $secret_key = "MY_SUPER_SECRET_KEY_REFUGIOS"; // Idealmente estaría en env
+    private static $secret_key = "MY_SUPER_SECRET_KEY_REFUGIOS_2026_SISTEMA"; // Idealmente estaría en env
     private static $alg = 'HS256';
 
     public static function generateToken($usuario)
