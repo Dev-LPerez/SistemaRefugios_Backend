@@ -6,8 +6,7 @@ class CreateFamiliaDTO
     public $direccion;
     public $cantidad_miembros;
     public $prioridad;
-    public $id_refugio;  // Renombrado lógicamente como refugio_id en DB, en el objeto podemos mapearlo.
-    public $refugio_id;  // Añadido para hacer match exacto de DB
+    public $id_refugio;
     public $ubicacion_actual;
     public $aceptacion_habeas_data;
     public $cedula;      // Añadido para la validación de duplicidad
@@ -22,7 +21,7 @@ class CreateFamiliaDTO
         $this->prioridad = $data['prioridad'] ?? null;
         
         // Soporte retrocompatible y nuevos campos
-        $this->refugio_id = $data['refugio_id'] ?? $data['id_refugio'] ?? null;
+        $this->id_refugio = $data['id_refugio'] ?? $data['refugio_id'] ?? null;
         $this->ubicacion_actual = $data['ubicacion_actual'] ?? 'Vivienda';
         
         // Aceptación habeas data (booleano)

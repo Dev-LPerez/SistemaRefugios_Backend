@@ -11,7 +11,7 @@ class CreateEntregaDTO
     {
         $this->estado = $data['estado'] ?? 'Entregado'; // Por defecto lo marcamos como entregado
         $this->fecha = $data['fecha'] ?? date('Y-m-d');
-        $this->cantidad = isset($data['cantidad']) ? (float) $data['cantidad'] : 0;
+        $this->cantidad = isset($data['cantidad']) ? (int) $data['cantidad'] : 0;
         $this->id_familia = $data['id_familia'] ?? null;
         $this->id_recurso = $data['id_recurso'] ?? null;
     }

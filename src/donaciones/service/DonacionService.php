@@ -28,8 +28,8 @@ class DonacionService
                 return ["status" => 201, "message" => "Donación registrada.", "id_donacion" => $id_generado];
             }
         } catch (PDOException $e) {
-            // Revert to legacy table 'donacion' if 'donaciones' fails
-            $query = "INSERT INTO donacion (fecha, descripcion, id_donante) VALUES (:fecha, :descripcion, :id_donante)";
+            // Revert to legacy table 'donaciones' si acaso
+            $query = "INSERT INTO donaciones (fecha, descripcion, id_donante) VALUES (:fecha, :descripcion, :id_donante)";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':fecha', $dto->fecha);
             $stmt->bindParam(':descripcion', $dto->descripcion);
@@ -68,9 +68,11 @@ class DonacionService
 
             // 2. Actualizamos el inventario sumando la cantidad al recurso existente
             // Y también actualizamos stock por si se usa en reportes
-            $queryInventario = "UPDATE recursos SET cantidad_disponible = cantidad_disponible + :cantidad, stock = IFNULL(stock, 0) + :cantidad WHERE id_recurso = :id_recurso";
+            $queryInventario = "UPDATE recursos 
+                    SET cantidad_disponible = cantidad_disponible + :incremento 
+                    WHERE id_recurso = :id_recurso";
             $stmtInventario = $this->db->prepare($queryInventario);
-            $stmtInventario->bindParam(':cantidad', $cantidad);
+            $stmtInventario->bindParam(':incremento', $cantidad, PDO::PARAM_INT);
             $stmtInventario->bindParam(':id_recurso', $id_recurso, PDO::PARAM_INT);
             $stmtInventario->execute();
 
@@ -89,7 +91,7 @@ class DonacionService
     public function getDonacionCompleta($id_donacion)
     {
         // Cabecera
-        $query = "SELECT * FROM donacion WHERE id_donacion = :id_donacion LIMIT 1";
+        $query = "SELECT * FROM donaciones WHERE id_donacion = :id_donacion LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id_donacion', $id_donacion, PDO::PARAM_INT);
         $stmt->execute();

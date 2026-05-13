@@ -22,8 +22,8 @@ class EntregaService
         $ultima = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($ultima) {
-            $fechaUltima = new DateTime($ultima['fecha']);
-            $fechaActual = new DateTime();
+            $fechaActual = new DateTime('now', new DateTimeZone('America/Bogota'));
+            $fechaUltima = new DateTime($ultima['fecha'], new DateTimeZone('America/Bogota'));
             $diferencia = $fechaActual->diff($fechaUltima);
             
             if ($diferencia->days < 3) {
@@ -63,15 +63,17 @@ class EntregaService
             $stmtInsert = $this->db->prepare($queryInsert);
             $stmtInsert->bindParam(':estado', $dto->estado);
             $stmtInsert->bindParam(':fecha', $dto->fecha);
-            $stmtInsert->bindParam(':cantidad', $dto->cantidad);
+            $stmtInsert->bindParam(':cantidad', $dto->cantidad, PDO::PARAM_INT);
             $stmtInsert->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
             $stmtInsert->bindParam(':id_recurso', $dto->id_recurso, PDO::PARAM_INT);
             $stmtInsert->execute();
 
             // 3. Descontar del inventario
-            $queryUpdate = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :cantidad, stock = IFNULL(stock, 0) - :cantidad WHERE id_recurso = :id_recurso";
+            // FIX: `:cantidad` no puede repetirse en la misma query → se usa `:decremento`
+            $queryUpdate = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :decremento 
+            WHERE id_recurso = :id_recurso";
             $stmtUpdate = $this->db->prepare($queryUpdate);
-            $stmtUpdate->bindParam(':cantidad', $dto->cantidad);
+            $stmtUpdate->bindParam(':decremento', $dto->cantidad, PDO::PARAM_INT);
             $stmtUpdate->bindParam(':id_recurso', $dto->id_recurso, PDO::PARAM_INT);
             $stmtUpdate->execute();
 
@@ -80,7 +82,6 @@ class EntregaService
 
         } catch (Exception $e) {
             $this->db->rollBack();
-            // Determinamos si el error es de stock o bloqueo de entregas
             $errorMsg = $e->getMessage();
             $status = (strpos($errorMsg, 'Stock') !== false || strpos($errorMsg, 'Bloqueo') !== false) ? 400 : 500;
             return ["status" => $status, "message" => "Error al procesar la entrega.", "error" => $errorMsg];
@@ -127,9 +128,10 @@ class EntregaService
             $stmtDelete->execute();
 
             // 3. Devolver la cantidad al inventario
-            $queryRefund = "UPDATE recursos SET cantidad_disponible = cantidad_disponible + :cantidad WHERE id_recurso = :id_recurso";
+            // FIX: `:cantidad` no puede repetirse en la misma query → se usa `:incremento`
+            $queryRefund = "UPDATE recursos SET cantidad_disponible = cantidad_disponible + :incremento WHERE id_recurso = :id_recurso";
             $stmtRefund = $this->db->prepare($queryRefund);
-            $stmtRefund->bindParam(':cantidad', $entrega['cantidad']);
+            $stmtRefund->bindParam(':incremento', $entrega['cantidad'], PDO::PARAM_INT);
             $stmtRefund->bindParam(':id_recurso', $entrega['id_recurso'], PDO::PARAM_INT);
             $stmtRefund->execute();
 

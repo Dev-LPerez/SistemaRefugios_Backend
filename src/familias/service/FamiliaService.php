@@ -29,8 +29,8 @@ class FamiliaService
         // Manejo retrospectivo a nivel de tabla
         // Asumiendo que la tabla se llama 'familias' (plural) o 'familia' (depende del esquema original)
         // Usaremos el esquema de query base pero añadiendo los nuevos campos.
-        $query = "INSERT INTO familias (cedula, representante, telefono, direccion, cantidad_miembros, prioridad, refugio_id, ubicacion_actual, aceptacion_habeas_data) 
-                  VALUES (:cedula, :representante, :telefono, :direccion, :cantidad_miembros, :prioridad, :refugio_id, :ubicacion_actual, :aceptacion_habeas_data)";
+        $query = "INSERT INTO familias (cedula, representante, telefono, direccion, cantidad_miembros, prioridad, id_refugio, ubicacion_actual, aceptacion_habeas_data) 
+                  VALUES (:cedula, :representante, :telefono, :direccion, :cantidad_miembros, :prioridad, :id_refugio, :ubicacion_actual, :aceptacion_habeas_data)";
         $stmt = $this->db->prepare($query);
 
         $stmt->bindParam(':cedula', $dto->cedula);
@@ -39,7 +39,7 @@ class FamiliaService
         $stmt->bindParam(':direccion', $dto->direccion);
         $stmt->bindParam(':cantidad_miembros', $dto->cantidad_miembros, PDO::PARAM_INT);
         $stmt->bindParam(':prioridad', $dto->prioridad);
-        $stmt->bindParam(':refugio_id', $dto->refugio_id, PDO::PARAM_INT);
+        $stmt->bindParam(':id_refugio', $dto->id_refugio, PDO::PARAM_INT);
         $stmt->bindParam(':ubicacion_actual', $dto->ubicacion_actual);
         $stmt->bindParam(':aceptacion_habeas_data', $dto->aceptacion_habeas_data, PDO::PARAM_INT);
 
@@ -50,7 +50,7 @@ class FamiliaService
         } catch (PDOException $e) {
             // Si la tabla original es 'familia' singular y falló, hacemos un fallback simple en entorno legacy si es necesario
             error_log("Error insertando familia: " . $e->getMessage());
-            return ["status" => 400, "message" => "Error al registrar: Verifica los datos provistos."];
+            return ["status" => 400, "message" => "Error DB: " . $e->getMessage()];
         }
         return ["status" => 500, "message" => "Error interno al registrar la familia."];
     }
@@ -100,7 +100,7 @@ class FamiliaService
     {
         $query = "UPDATE familias 
                   SET representante = :representante, telefono = :telefono, direccion = :direccion, 
-                      cantidad_miembros = :cantidad_miembros, prioridad = :prioridad, refugio_id = :refugio_id,
+                      cantidad_miembros = :cantidad_miembros, prioridad = :prioridad, id_refugio = :id_refugio,
                       ubicacion_actual = :ubicacion_actual, aceptacion_habeas_data = :aceptacion_habeas_data
                   WHERE id_familia = :id";
 
@@ -110,7 +110,7 @@ class FamiliaService
         $stmt->bindParam(':direccion', $dto->direccion);
         $stmt->bindParam(':cantidad_miembros', $dto->cantidad_miembros, PDO::PARAM_INT);
         $stmt->bindParam(':prioridad', $dto->prioridad);
-        $stmt->bindParam(':refugio_id', $dto->refugio_id, PDO::PARAM_INT);
+        $stmt->bindParam(':id_refugio', $dto->id_refugio, PDO::PARAM_INT);
         $stmt->bindParam(':ubicacion_actual', $dto->ubicacion_actual);
         $stmt->bindParam(':aceptacion_habeas_data', $dto->aceptacion_habeas_data, PDO::PARAM_INT);
         $stmt->bindParam(':id', $dto->id_familia, PDO::PARAM_INT);
@@ -178,8 +178,8 @@ class FamiliaService
                     continue;
                 }
 
-                $query = "INSERT INTO familias (cedula, representante, telefono, direccion, cantidad_miembros, prioridad, refugio_id, ubicacion_actual, aceptacion_habeas_data) 
-                          VALUES (:cedula, :representante, :telefono, :direccion, :cantidad_miembros, :prioridad, :refugio_id, :ubicacion_actual, :aceptacion_habeas_data)";
+                $query = "INSERT INTO familias (cedula, representante, telefono, direccion, cantidad_miembros, prioridad, id_refugio, ubicacion_actual, aceptacion_habeas_data) 
+                          VALUES (:cedula, :representante, :telefono, :direccion, :cantidad_miembros, :prioridad, :id_refugio, :ubicacion_actual, :aceptacion_habeas_data)";
                 
                 $stmt = $this->db->prepare($query);
                 
@@ -189,7 +189,7 @@ class FamiliaService
                 $stmt->bindParam(':direccion', $dto->direccion);
                 $stmt->bindParam(':cantidad_miembros', $dto->cantidad_miembros, PDO::PARAM_INT);
                 $stmt->bindParam(':prioridad', $dto->prioridad);
-                $stmt->bindParam(':refugio_id', $dto->refugio_id, PDO::PARAM_INT);
+                $stmt->bindParam(':id_refugio', $dto->id_refugio, PDO::PARAM_INT);
                 $stmt->bindParam(':ubicacion_actual', $dto->ubicacion_actual);
                 $stmt->bindParam(':aceptacion_habeas_data', $dto->aceptacion_habeas_data, PDO::PARAM_INT);
 

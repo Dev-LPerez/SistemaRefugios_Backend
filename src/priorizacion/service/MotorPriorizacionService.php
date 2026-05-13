@@ -89,7 +89,7 @@ class MotorPriorizacionService
     public function generarDespachos()
     {
         // Traemos todas las familias y contamos a sus miembros
-        $query = "SELECT f.id_familia, f.representante, f.ubicacion_actual, f.refugio_id, 
+        $query = "SELECT f.id_familia, f.representante, f.ubicacion_actual, f.id_refugio, 
                          (SELECT COUNT(*) FROM miembros m WHERE m.id_familia = f.id_familia) as cantidad_miembros
                   FROM familias f";
         $stmt = $this->db->prepare($query);

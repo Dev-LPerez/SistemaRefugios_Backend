@@ -7,7 +7,7 @@ class UpdateFamiliaDTO
     public $direccion;
     public $cantidad_miembros;
     public $prioridad;
-    public $refugio_id;
+    public $id_refugio;
     public $ubicacion_actual;
     public $aceptacion_habeas_data;
     public $cedula;
@@ -21,7 +21,7 @@ class UpdateFamiliaDTO
         $this->direccion = $data['direccion'] ?? null;
         $this->cantidad_miembros = $data['cantidad_miembros'] ?? null;
         $this->prioridad = $data['prioridad'] ?? null;
-        $this->refugio_id = $data['refugio_id'] ?? $data['id_refugio'] ?? null;
+        $this->id_refugio = $data['id_refugio'] ?? $data['refugio_id'] ?? null;
         $this->ubicacion_actual = $data['ubicacion_actual'] ?? null;
         
         if (isset($data['aceptacion_habeas_data'])) {
@@ -34,6 +34,6 @@ class UpdateFamiliaDTO
     public function isValid()
     {
         return !empty($this->id_familia) &&
-            (!empty($this->representante) || !empty($this->direccion) || !empty($this->cantidad_miembros) || !empty($this->refugio_id) || !empty($this->ubicacion_actual));
+            (!empty($this->representante) || !empty($this->direccion) || !empty($this->cantidad_miembros) || !empty($this->id_refugio) || !empty($this->ubicacion_actual));
     }
 }
