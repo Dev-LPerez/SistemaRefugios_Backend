@@ -5,8 +5,12 @@ use \Firebase\JWT\Key;
 
 class AuthMiddleware
 {
-    private static $secret_key = "MY_SUPER_SECRET_KEY_REFUGIOS_2026_SISTEMA"; // Idealmente estaría en env
     private static $alg = 'HS256';
+
+    private static function getSecretKey()
+    {
+        return getenv('JWT_SECRET') ?: "MY_SUPER_SECRET_KEY_REFUGIOS_2026_SISTEMA";
+    }
 
     public static function generateToken($usuario)
     {
@@ -20,7 +24,7 @@ class AuthMiddleware
             ]
         ];
 
-        return JWT::encode($payload, self::$secret_key, self::$alg);
+        return JWT::encode($payload, self::getSecretKey(), self::$alg);
     }
 
     public static function checkToken()
@@ -37,7 +41,7 @@ class AuthMiddleware
         $token = $matches[1];
 
         try {
-            $decoded = JWT::decode($token, new Key(self::$secret_key, self::$alg));
+            $decoded = JWT::decode($token, new Key(self::getSecretKey(), self::$alg));
             return $decoded->data; // Devuelve los datos del usuario en el token
         } catch (Exception $e) {
             http_response_code(401);

@@ -1,223 +1,590 @@
+# API Refugios — Guía de Pruebas en Postman
+
+**Base URL local:** `http://localhost/Backend_Refugios`  
+**Base URL producción:** `https://sistemarefugios-backend.onrender.com`
+
+> Todos los endpoints reciben y devuelven **JSON**.  
+> Los endpoints protegidos requieren el header: `Authorization: Bearer {token}`
 
 ---
 
-### 1. Módulo: Refugios
-*   **Listar todos:** `GET https://sistemarefugios-backend.onrender.com/refugios`
-*   **Ver uno solo:** `GET https://sistemarefugios-backend.onrender.com/refugios/1`
-*   **Crear (POST):** `POST https://sistemarefugios-backend.onrender.com/refugios`
-    ```json
-    {
-      "nombre": "Refugio La Esperanza",
-      "ubicacion": "Sector La Castellana",
-      "capacidad": 150
-    }
-    ```
-*   **Editar (PUT):** `PUT https://sistemarefugios-backend.onrender.com/refugios/1`
-    ```json
-    {
-      "nombre": "Refugio La Esperanza",
-      "ubicacion": "Sector La Castellana",
-      "capacidad": 200
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/refugios/1`
+## Flujo de Prueba Recomendado
 
-### 2. Módulo: Familias
-*   **Listar todas:** `GET https://sistemarefugios-backend.onrender.com/familias`
-*   **Ver una sola:** `GET https://sistemarefugios-backend.onrender.com/familias/1`
-*   **Crear (POST):** `POST https://sistemarefugios-backend.onrender.com/familias`
-    ```json
-    {
-      "representante": "Andrea Martinez",
-      "telefono": "3009998888",
-      "direccion": "Barrio El Prado",
-      "cantidad_miembros": 3,
-      "prioridad": "alta",
-      "id_refugio": 1
-    }
-    ```
-*   **Editar (PUT):** `PUT https://sistemarefugios-backend.onrender.com/familias/1`
-    ```json
-    {
-      "representante": "Andrea Martinez",
-      "telefono": "3009998888",
-      "direccion": "Barrio El Prado",
-      "cantidad_miembros": 4,
-      "prioridad": "alta",
-      "id_refugio": 1
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/familias/1`
+Sigue este orden para respetar las dependencias entre módulos:
 
-### 3. Módulo: Miembros (Personas)
-*   **Listar todos los de una familia:** `GET https://sistemarefugios-backend.onrender.com/familias/miembros?id_familia=1`
-*   **Ver un miembro específico:** `GET https://sistemarefugios-backend.onrender.com/familias/miembros/1`
-*   **Agregar miembro a familia (POST):** `POST https://sistemarefugios-backend.onrender.com/familias/miembros`
-    ```json
-    {
-      "nombre": "Sofia Martinez",
-      "edad": 8,
-      "parentezco": "hija",
-      "tipo_documento": "TI",
-      "numero_documento": "100200300",
-      "vulnerable": 1,
-      "tipo_vulnerabilidad": "niño",
-      "id_familia": 1
-    }
-    ```
-*   **Editar miembro (PUT):** `PUT https://sistemarefugios-backend.onrender.com/familias/miembros/1`
-    ```json
-    {
-      "nombre": "Sofia Martinez",
-      "edad": 9,
-      "parentezco": "hija",
-      "tipo_documento": "TI",
-      "numero_documento": "100200300",
-      "vulnerable": 1,
-      "tipo_vulnerabilidad": "niño",
-      "id_familia": 1
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/familias/miembros/1`
+```
+1. Crear Usuario → 2. Login → 3. Crear Refugio → 4. Crear Familia →
+5. Crear Miembro → 6. Crear Recurso → 7. Crear Donante →
+8. Crear Donación → 9. Agregar Detalle → 10. Crear Entrega → 11. Probar bloqueo stock
+```
 
-### 4. Módulo: Recursos (Inventario)
-*   **Ver todo el inventario:** `GET https://sistemarefugios-backend.onrender.com/recursos`
-*   **Ver un recurso:** `GET https://sistemarefugios-backend.onrender.com/recursos/1`
-*   **Crear un artículo nuevo (POST):** `POST https://sistemarefugios-backend.onrender.com/recursos`
-    ```json
-    {
-      "nombre": "Kit de Primeros Auxilios",
-      "tipo": "salud",
-      "unidad": "cajas",
-      "cantidad_disponible": 0
-    }
-    ```
-*   **Editar un recurso (PUT):** `PUT https://sistemarefugios-backend.onrender.com/recursos/1`
-    ```json
-    {
-      "nombre": "Kit de Primeros Auxilios",
-      "tipo": "salud",
-      "unidad": "cajas",
-      "cantidad_disponible": 10
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/recursos/1`
+---
 
-### 5. Módulo: Donantes
-*   **Listar todos:** `GET https://sistemarefugios-backend.onrender.com/donantes`
-*   **Ver uno:** `GET https://sistemarefugios-backend.onrender.com/donantes/1`
-*   **Crear donante (POST):** `POST https://sistemarefugios-backend.onrender.com/donantes`
-    ```json
-    {
-      "identificacion": "800900100",
-      "nombre": "Fundación Vida",
-      "tipo": "ONG",
-      "telefono": "3120000000"
-    }
-    ```
-*   **Editar donante (PUT):** `PUT https://sistemarefugios-backend.onrender.com/donantes/1`
-    ```json
-    {
-      "identificacion": "800900100",
-      "nombre": "Fundación Nueva Vida",
-      "tipo": "ONG",
-      "telefono": "3120000000"
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/donantes/1`
+## 1. Usuarios
 
-### 6. Módulo: Donaciones (Entradas de Stock)
-*   **Ver una donación con sus detalles:** `GET https://sistemarefugios-backend.onrender.com/donaciones/1`
-*   **Listar donaciones:** `GET https://sistemarefugios-backend.onrender.com/donaciones`
-*   **Paso A - Crear Cabecera (POST):** `POST https://sistemarefugios-backend.onrender.com/donaciones`
-    ```json
-    {
-      "fecha": "2026-05-02",
-      "descripcion": "Lote de medicinas y mantas",
-      "id_donante": 1
-    }
-    ```
-*   **Paso B - Agregar Recursos a esa Donación (POST):** `POST https://sistemarefugios-backend.onrender.com/donaciones?action=agregar_detalle`
-    ```json
-    {
-      "id_donacion": 1,
-      "id_recurso": 2,
-      "cantidad": 50
-    }
-    ```
-*   **Editar donación (PUT):** `PUT https://sistemarefugios-backend.onrender.com/donaciones/1`
-    ```json
-    {
-      "fecha": "2026-05-02",
-      "descripcion": "Lote actualizado de medicinas",
-      "id_donante": 1
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/donaciones/1`
+### Crear Usuario
+```
+POST /usuarios
+```
+```json
+{
+  "user": "admin_test",
+  "password": "1234",
+  "rol": "Admin"
+}
+```
+**Respuesta esperada:** `201` — `"Usuario creado exitosamente."`
 
-### 7. Módulo: Entregas (Salidas de Stock)
-*   **Ver historial general:** `GET https://sistemarefugios-backend.onrender.com/entregas`
-*   **Ver una entrega:** `GET https://sistemarefugios-backend.onrender.com/entregas/1`
-*   **Entregar recurso a familia (POST):** `POST https://sistemarefugios-backend.onrender.com/entregas`
-    ```json
-    {
-      "estado": "entregado",
-      "fecha": "2026-05-02",
-      "cantidad": 2,
-      "id_familia": 1,
-      "id_recurso": 2
-    }
-    ```
-*   **Editar entrega (PUT):** `PUT https://sistemarefugios-backend.onrender.com/entregas/1`
-    ```json
-    {
-      "estado": "entregado",
-      "fecha": "2026-05-02",
-      "cantidad": 3,
-      "id_familia": 1,
-      "id_recurso": 2
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/entregas/1`
+---
 
-### 8. Módulo: Gestiones (Auditoría manual)
-*   **Ver historial:** `GET https://sistemarefugios-backend.onrender.com/gestiones`
-*   **Ver una gestión:** `GET https://sistemarefugios-backend.onrender.com/gestiones/1`
-*   **Registrar movimiento (POST):** `POST https://sistemarefugios-backend.onrender.com/gestiones`
-    ```json
-    {
-      "id_usuario": 1,
-      "id_recurso": 1,
-      "accion": "Ajuste de inventario por merma"
-    }
-    ```
-*   **Editar movimiento (PUT):** `PUT https://sistemarefugios-backend.onrender.com/gestiones/1`
-    ```json
-    {
-      "id_usuario": 1,
-      "id_recurso": 1,
-      "accion": "Ajuste de inventario por merma corregido"
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/gestiones/1`
+### Listar Usuarios
+```
+GET /usuarios
+```
 
-### 9. Módulo: Usuarios
-*   **Listar todos:** `GET https://sistemarefugios-backend.onrender.com/usuarios`
-*   **Ver un usuario:** `GET https://sistemarefugios-backend.onrender.com/usuarios/1`
-*   **Crear nuevo (POST):** `POST https://sistemarefugios-backend.onrender.com/usuarios`
-    ```json
-    {
-      "user": "juan_coordinador",
-      "password": "super_secret_password",
-      "rol": "coordinador"
-    }
-    ```
-*   **Editar usuario (PUT):** `PUT https://sistemarefugios-backend.onrender.com/usuarios/1`
-    ```json
-    {
-      "user": "juan_coordinador",
-      "password": "new_super_secret_password",
-      "rol": "admin"
-    }
-    ```
-*   **Eliminar:** `DELETE https://sistemarefugios-backend.onrender.com/usuarios/1`
+### Ver Usuario por ID
+```
+GET /usuarios/1
+```
+
+### Actualizar Usuario
+```
+PUT /usuarios/1
+```
+```json
+{
+  "user": "admin_actualizado",
+  "password": "nueva_pass",
+  "rol": "Admin"
+}
+```
+
+### Eliminar Usuario
+```
+DELETE /usuarios/1
+```
+
+---
+
+## 2. Login / Autenticación
+
+### Login
+```
+POST /login
+```
+```json
+{
+  "user": "admin_test",
+  "password": "1234"
+}
+```
+**Respuesta esperada:** `200` + token JWT.  
+> Guarda el token para usarlo en los endpoints protegidos como header: `Authorization: Bearer {token}`
+
+---
+
+## 3. Refugios
+
+### Crear Refugio
+```
+POST /refugios
+```
+```json
+{
+  "nombre": "Refugio Norte",
+  "direccion": "Calle 10 #5-20",
+  "capacidad_maxima": 50,
+  "estado": "activo"
+}
+```
+**Respuesta esperada:** `201` — Guarda el `id_refugio`.
+
+---
+
+### Listar Refugios
+```
+GET /refugios
+```
+
+### Ver Refugio por ID
+```
+GET /refugios/1
+```
+
+### Actualizar Refugio
+```
+PUT /refugios/1
+```
+```json
+{
+  "nombre": "Refugio Norte Actualizado",
+  "direccion": "Calle 10 #5-20",
+  "capacidad_maxima": 80,
+  "ocupacion_actual": 10,
+  "estado": "activo"
+}
+```
+
+### Eliminar Refugio
+```
+DELETE /refugios/1
+```
+
+---
+
+## 4. Familias
+
+### Registrar Familia
+```
+POST /familias
+```
+```json
+{
+  "cedula": "12345678",
+  "representante": "Juan Pérez",
+  "telefono": "3001234567",
+  "direccion": "Sector La Planicie, Calle 4, Casa 12",
+  "cantidad_miembros": 4,
+  "prioridad": "Alta",
+  "id_refugio": 1,
+  "ubicacion_actual": "Refugio",
+  "aceptacion_habeas_data": true
+}
+```
+**Respuesta esperada:** `201` — Guarda el `id_familia`.
+
+---
+
+### Listar Familias
+```
+GET /familias
+```
+
+### Ver Familia por ID
+```
+GET /familias/1
+```
+
+### Buscar por Cédula
+```
+GET /familias?cedula=12345678
+```
+
+### Actualizar Familia
+```
+PUT /familias/1
+```
+```json
+{
+  "cedula": "12345678",
+  "representante": "Juan Pérez",
+  "telefono": "3009999999",
+  "direccion": "Nueva dirección",
+  "cantidad_miembros": 5,
+  "prioridad": "Alta",
+  "id_refugio": 1,
+  "ubicacion_actual": "Refugio",
+  "aceptacion_habeas_data": true
+}
+```
+
+### Eliminar Familia
+```
+DELETE /familias/1
+```
+
+---
+
+## 5. Miembros de Familia
+
+### Agregar Miembro
+```
+POST /familias/miembros
+```
+```json
+{
+  "nombre": "Maria Pérez",
+  "edad": 8,
+  "es_embarazada": false,
+  "tiene_discapacidad": false,
+  "enfermedad_cronica": false,
+  "parentezco": "Hija",
+  "tipo_documento": "TI",
+  "numero_documento": "987654321",
+  "vulnerable": 1,
+  "tipo_vulnerabilidad": "Menor de edad",
+  "id_familia": 1
+}
+```
+**Respuesta esperada:** `201`
+
+---
+
+### Listar Miembros de una Familia
+```
+GET /familias/miembros?id_familia=1
+```
+
+### Ver Miembro por ID
+```
+GET /familias/miembros/1
+```
+
+### Actualizar Miembro
+```
+PUT /familias/miembros/1
+```
+```json
+{
+  "nombre": "Maria Pérez",
+  "edad": 9,
+  "es_embarazada": false,
+  "tiene_discapacidad": false,
+  "enfermedad_cronica": false,
+  "parentezco": "Hija",
+  "tipo_documento": "TI",
+  "numero_documento": "987654321",
+  "vulnerable": 1,
+  "tipo_vulnerabilidad": "Menor de edad",
+  "id_familia": 1
+}
+```
+
+### Eliminar Miembro
+```
+DELETE /familias/miembros/1
+```
+
+---
+
+## 6. Recursos (Inventario)
+
+### Crear Recurso
+```
+POST /recursos
+```
+```json
+{
+  "nombre": "Agua embotellada",
+  "tipo": "Alimento",
+  "unidad": "Litros",
+  "cantidad_disponible": 0
+}
+```
+**Respuesta esperada:** `201` — Guarda el `id_recurso`.
+
+---
+
+### Ver Todo el Inventario
+```
+GET /recursos
+```
+
+### Ver Recurso por ID
+```
+GET /recursos/1
+```
+
+### Actualizar Recurso
+```
+PUT /recursos/1
+```
+```json
+{
+  "nombre": "Agua embotellada",
+  "tipo": "Alimento",
+  "unidad": "Litros",
+  "cantidad_disponible": 200
+}
+```
+
+### Eliminar Recurso
+```
+DELETE /recursos/1
+```
+
+---
+
+## 7. Donantes
+
+### Crear Donante
+```
+POST /donantes
+```
+```json
+{
+  "identificacion": "9001234567",
+  "nombre": "Empresa Solidaria SAS",
+  "tipo": "empresa",
+  "telefono": "3100000000"
+}
+```
+**Respuesta esperada:** `201` — Guarda el `id_donante`.
+
+---
+
+### Listar Donantes
+```
+GET /donantes
+```
+
+### Ver Donante por ID
+```
+GET /donantes/1
+```
+
+### Actualizar Donante
+```
+PUT /donantes/1
+```
+```json
+{
+  "identificacion": "9001234567",
+  "nombre": "Empresa Solidaria SAS Actualizada",
+  "tipo": "empresa",
+  "telefono": "3109999999"
+}
+```
+
+### Eliminar Donante
+```
+DELETE /donantes/1
+```
+
+---
+
+## 8. Donaciones
+
+### Paso A — Crear Cabecera de Donación
+```
+POST /donaciones
+```
+```json
+{
+  "fecha": "2026-05-14",
+  "descripcion": "Donación de agua y alimentos",
+  "id_donante": 1
+}
+```
+**Respuesta esperada:** `201` — Guarda el `id_donacion`.
+
+---
+
+### Paso B — Agregar Detalle (incrementa inventario automáticamente)
+```
+POST /donaciones?action=agregar_detalle
+```
+```json
+{
+  "id_donacion": 1,
+  "id_recurso": 1,
+  "cantidad": 100
+}
+```
+**Respuesta esperada:** `201` — Verifica con `GET /recursos/1` que `cantidad_disponible` subió.
+
+---
+
+### Listar Donaciones
+```
+GET /donaciones
+```
+
+### Ver Donación por ID
+```
+GET /donaciones/1
+```
+
+### Actualizar Donación
+```
+PUT /donaciones/1
+```
+```json
+{
+  "fecha": "2026-05-14",
+  "descripcion": "Descripción actualizada",
+  "id_donante": 1
+}
+```
+
+### Eliminar Donación
+```
+DELETE /donaciones/1
+```
+
+---
+
+## 9. Entregas
+
+### Registrar Entrega (descuenta inventario automáticamente)
+```
+POST /entregas
+```
+```json
+{
+  "estado": "entregado",
+  "fecha": "2026-05-14",
+  "cantidad": 20,
+  "id_familia": 1,
+  "id_recurso": 1
+}
+```
+**Respuesta esperada:** `201` — Verifica con `GET /recursos/1` que `cantidad_disponible` bajó.
+
+---
+
+### Prueba: Stock Insuficiente
+```
+POST /entregas
+```
+```json
+{
+  "estado": "entregado",
+  "fecha": "2026-05-14",
+  "cantidad": 9999,
+  "id_familia": 2,
+  "id_recurso": 1
+}
+```
+**Respuesta esperada:** `400` — `"Stock insuficiente. Solo quedan X de Y"`
+
+---
+
+### Prueba: Bloqueo de 72 horas (RF-05.02)
+Intenta hacer una segunda entrega a la misma familia el mismo día:
+```
+POST /entregas
+```
+```json
+{
+  "estado": "entregado",
+  "fecha": "2026-05-14",
+  "cantidad": 5,
+  "id_familia": 1,
+  "id_recurso": 1
+}
+```
+**Respuesta esperada:** `400` — `"Bloqueo de seguridad: La familia recibió apoyo hace menos de 72 horas..."`
+
+---
+
+### Listar Entregas
+```
+GET /entregas
+```
+
+### Ver Entrega por ID
+```
+GET /entregas/1
+```
+
+### Eliminar Entrega (devuelve stock automáticamente)
+```
+DELETE /entregas/1
+```
+**Respuesta esperada:** `200` — `"Entrega eliminada. El inventario ha sido devuelto."` — Verifica que el stock subió.
+
+---
+
+## 10. Gestiones
+
+### Registrar Gestión
+```
+POST /gestiones
+```
+```json
+{
+  "id_usuario": 1,
+  "id_recurso": 1,
+  "accion": "Ajuste de inventario por merma"
+}
+```
+
+### Listar Gestiones
+```
+GET /gestiones
+```
+
+### Ver Gestión por ID
+```
+GET /gestiones/1
+```
+
+### Actualizar Gestión
+```
+PUT /gestiones/1
+```
+```json
+{
+  "id_usuario": 1,
+  "id_recurso": 1,
+  "accion": "Ajuste de inventario corregido"
+}
+```
+
+### Eliminar Gestión
+```
+DELETE /gestiones/1
+```
+
+---
+
+## 11. Priorización
+
+### Generar Lista de Despacho (RF-04.03)
+```
+GET /priorizacion
+```
+**Respuesta:** Lista de todas las familias ordenadas de mayor a menor puntaje de prioridad, con su ración de supervivencia calculada.
+
+### Calcular Puntaje de una Familia (RF-04.02)
+```
+GET /priorizacion?id_familia=1
+```
+
+---
+
+## 12. Reportes
+
+### Trazabilidad Origen-Destino (RF-06.01)
+```
+GET /reportes?action=trazabilidad
+```
+**Respuesta:** Qué familias recibieron qué recursos y de qué donantes provienen.
+
+### Dashboard de Estadísticas (RF-06.02)
+```
+GET /reportes?action=dashboard
+```
+**Respuesta:** Total familias, personas, entregas completadas, unidades en almacén y recursos en alerta de stock.
+
+---
+
+## 13. Auditoría
+
+### Ver Logs de Auditoría (RNF-05.03)
+```
+GET /auditoria
+```
+**Respuesta:** Historial completo de acciones con usuario, acción, entidad, IP y timestamp.
+
+---
+
+## Resumen de Endpoints
+
+| Módulo | GET all | GET id | POST | PUT | DELETE |
+|---|---|---|---|---|---|
+| Refugios | `/refugios` | `/refugios/{id}` | `/refugios` | `/refugios/{id}` | `/refugios/{id}` |
+| Familias | `/familias` | `/familias/{id}` | `/familias` | `/familias/{id}` | `/familias/{id}` |
+| Miembros | `/familias/miembros?id_familia={id}` | `/familias/miembros/{id}` | `/familias/miembros` | `/familias/miembros/{id}` | `/familias/miembros/{id}` |
+| Usuarios | `/usuarios` | `/usuarios/{id}` | `/usuarios` | `/usuarios/{id}` | `/usuarios/{id}` |
+| Recursos | `/recursos` | `/recursos/{id}` | `/recursos` | `/recursos/{id}` | `/recursos/{id}` |
+| Donantes | `/donantes` | `/donantes/{id}` | `/donantes` | `/donantes/{id}` | `/donantes/{id}` |
+| Donaciones | `/donaciones` | `/donaciones/{id}` | `/donaciones` | `/donaciones/{id}` | `/donaciones/{id}` |
+| Detalle Donación | — | — | `/donaciones?action=agregar_detalle` | — | — |
+| Entregas | `/entregas` | `/entregas/{id}` | `/entregas` | — | `/entregas/{id}` |
+| Gestiones | `/gestiones` | `/gestiones/{id}` | `/gestiones` | `/gestiones/{id}` | `/gestiones/{id}` |
+| Priorización | `/priorizacion` | `/priorizacion?id_familia={id}` | — | — | — |
+| Reportes | `/reportes?action=dashboard` | `/reportes?action=trazabilidad` | — | — | — |
+| Auditoría | `/auditoria` | — | — | — | — |
+| Login | — | — | `/login` | — | — |
