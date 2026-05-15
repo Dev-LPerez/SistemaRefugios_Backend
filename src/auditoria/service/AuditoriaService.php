@@ -33,7 +33,7 @@ class AuditoriaService
     {
         $query = "SELECT l.*, u.user as username 
                   FROM auditoria_logs l 
-                  LEFT JOIN usuario u ON l.usuario_id = u.id_usuario 
+                  LEFT JOIN usuarios u ON l.usuario_id = u.id_usuario 
                   ORDER BY l.fecha DESC";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
