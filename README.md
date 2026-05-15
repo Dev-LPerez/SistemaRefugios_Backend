@@ -156,13 +156,13 @@ Log automático de acciones con usuario, acción, entidad e IP.
 |---|---|---|
 | RF-04.01 | Ración de Supervivencia (mínimo 3 días por familia) | `MotorPriorizacionService::calcularRacionSupervivencia()`: 2L agua + 1.5kg alimento × miembros × 3 días. |
 | RF-04.02 | Puntaje de Prioridad automático por vulnerabilidades | `MotorPriorizacionService::calcularPuntajePrioridad()`: +10 base, +20 embarazo, +20 discapacidad, +15 primera infancia (<5 años), +15 tercera edad (>65), +10 enfermedad crónica. |
-| RF-04.03 | Listas de Despacho ordenadas por prioridad | `MotorPriorizacionService::generarDespachos()` → endpoint `GET /priorizacion`. Ordenadas con `usort()` descendente. |
+| RF-04.03 | Listas de Despacho ordenadas por prioridad | `MotorPriorizacionService::generarDespachos()` → endpoint `GET /priorizacion&action=despachos`. Ordenadas con `usort()` descendente. |
 
 ### Módulo 5 — Despacho, Logística y Entregas
 
 | RF | Descripción | Implementación |
 |---|---|---|
-| RF-05.01 | Búsqueda rápida por cédula | `GET /familias?cedula={cedula}` en `FamiliaService`. |
+| RF-05.01 | Búsqueda rápida por cédula | `GET //familias&action=search&q={cedula}` en `FamiliaService`. |
 | RF-05.02 | Bloqueo si la familia ya recibió apoyo en menos de 72h | `EntregaService::checkUltimaEntrega()` compara fecha de última entrega. Lanza excepción con zona horaria `America/Bogota`. |
 | RF-05.03 | Descuento automático de inventario al confirmar entrega | Transacción PDO en `EntregaService::createEntrega()`: INSERT en `detalle_entrega` + UPDATE `cantidad_disponible`. Rollback en caso de fallo. |
 
@@ -170,7 +170,7 @@ Log automático de acciones con usuario, acción, entidad e IP.
 
 | RF | Descripción | Implementación |
 |---|---|---|
-| RF-06.01 | Reporte Origen-Destino por donante | `ReporteService::getTrazabilidadOrigenDestino()` → `GET /reportes?action=trazabilidad`. JOIN entre `detalle_entrega`, `recursos`, `familias` y `donaciones`. |
+| RF-06.01 | Reporte Origen-Destino por donante | `ReporteService::getTrazabilidadOrigenDestino()` → `GET /reportes?action=origen-destino`. JOIN entre `detalle_entrega`, `recursos`, `familias` y `donaciones`. |
 | RF-06.02 | Estadísticas: % atendidos, distribución, estado censo | `ReporteService::getDashboardStats()` → `GET /reportes?action=dashboard`. Devuelve total familias, personas, entregas completadas y alertas de stock. |
 
 ---

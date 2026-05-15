@@ -84,11 +84,12 @@ class FamiliaService
     public function searchFamilia($q)
     {
         $query = "SELECT * FROM familias 
-                  WHERE cedula LIKE :q OR representante LIKE :q 
+                  WHERE cedula LIKE :q1 OR representante LIKE :q2 
                   LIMIT 20";
         $stmt = $this->db->prepare($query);
         $searchParam = "%{$q}%";
-        $stmt->bindParam(':q', $searchParam);
+        $stmt->bindParam(':q1', $searchParam);
+        $stmt->bindParam(':q2', $searchParam);
         $stmt->execute();
         
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
