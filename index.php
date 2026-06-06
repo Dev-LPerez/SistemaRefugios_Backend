@@ -88,12 +88,14 @@ if (!$isLoginRoute) {
         $dataStr = is_array($redactedData) ? json_encode($redactedData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
         
         if ($method === 'DELETE') {
+            $motivo = $_GET['motivo'] ?? '';
+            $motivoStr = $motivo ? " (Motivo: $motivo)" : "";
             if ($id) {
-                $detalle = "Eliminó registro con ID: $id";
+                $detalle = "Eliminó registro con ID: $id$motivoStr";
             } elseif ($id_familia) {
-                $detalle = "Eliminó miembro de familia ID: $id_familia";
+                $detalle = "Eliminó miembro de familia ID: $id_familia$motivoStr";
             } else {
-                $detalle = "Eliminó registro";
+                $detalle = "Eliminó registro$motivoStr";
             }
         } elseif ($method === 'PUT') {
             $targetId = $id ?? $id_familia ?? '';
