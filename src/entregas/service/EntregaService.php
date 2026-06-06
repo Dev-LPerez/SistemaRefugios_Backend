@@ -100,12 +100,12 @@ class EntregaService
         }
     }
 
-    // READ ALL (GET) - Usamos JOIN para traer datos legibles en vez de solo IDs
+    // READ ALL (GET) - Usamos JOIN para traer datos legibles y los agrupamos por entrega
     public function getAllEntregas()
     {
-        $query = "SELECT e.id_entrega, e.estado, e.fecha, 
+        $query = "SELECT e.id_entrega, e.estado, e.fecha, e.id_familia,
                          f.representante AS familia_representante, 
-                         r.nombre AS recurso_nombre, r.unidad, de.cantidad 
+                         de.id_detalle, r.id_recurso, r.nombre AS recurso_nombre, r.unidad, de.cantidad 
                   FROM entregas e
                   JOIN detalle_entrega de ON e.id_entrega = de.id_entrega
                   JOIN familias f ON e.id_familia = f.id_familia
@@ -114,7 +114,30 @@ class EntregaService
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return ["status" => 200, "data" => $resultados];
+
+        $agrupado = [];
+        foreach ($resultados as $row) {
+            $id = $row['id_entrega'];
+            if (!isset($agrupado[$id])) {
+                $agrupado[$id] = [
+                    'id_entrega' => $id,
+                    'estado' => $row['estado'],
+                    'fecha' => $row['fecha'],
+                    'id_familia' => $row['id_familia'],
+                    'familia_representante' => $row['familia_representante'],
+                    'detalles' => []
+                ];
+            }
+            $agrupado[$id]['detalles'][] = [
+                'id_detalle' => $row['id_detalle'],
+                'id_recurso' => $row['id_recurso'],
+                'recurso_nombre' => $row['recurso_nombre'],
+                'unidad' => $row['unidad'],
+                'cantidad' => $row['cantidad']
+            ];
+        }
+
+        return ["status" => 200, "data" => array_values($agrupado)];
     }
 
     // DELETE (DELETE) - Si borramos una entrega, devolvemos el stock al inventario

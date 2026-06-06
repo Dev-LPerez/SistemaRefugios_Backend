@@ -499,26 +499,31 @@ POST /entregas
 ```
 GET /entregas
 ```
-**Respuesta:** Una lista consolidada cruzando la tabla cabecera con sus respectivos detalles (recursos) y familia. Múltiples recursos de una misma entrega compartirán el mismo `id_entrega` temporal y fecha. Por ejemplo:
+**Respuesta:** Una lista consolidada agrupando en un array los detalles (recursos) vinculados a cada entrega.
 ```json
 [
   {
     "id_entrega": 2,
     "estado": "entregado",
     "fecha": "2026-05-14",
+    "id_familia": 1,
     "familia_representante": "Juan Pérez",
-    "recurso_nombre": "Agua embotellada",
-    "unidad": "Litros",
-    "cantidad": 20
-  },
-  {
-    "id_entrega": 2,
-    "estado": "entregado",
-    "fecha": "2026-05-14",
-    "familia_representante": "Juan Pérez",
-    "recurso_nombre": "Arroz",
-    "unidad": "Kilos",
-    "cantidad": 5
+    "detalles": [
+      {
+        "id_detalle": 1,
+        "id_recurso": 1,
+        "recurso_nombre": "Agua embotellada",
+        "unidad": "Litros",
+        "cantidad": 20
+      },
+      {
+        "id_detalle": 2,
+        "id_recurso": 2,
+        "recurso_nombre": "Arroz",
+        "unidad": "Kilos",
+        "cantidad": 5
+      }
+    ]
   }
 ]
 ```
