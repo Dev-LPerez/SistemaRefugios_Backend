@@ -58,7 +58,23 @@ class FamiliaService
     // ALL FAMILIAS (GET)
     public function getAllFamilias()
     {
-        $query = "SELECT * FROM familias";
+        $query = "SELECT f.*,
+                         COALESCE(
+                             (
+                                 SELECT 10 + SUM(
+                                     IF(m.edad < 5, 15, 0) +
+                                     IF(m.edad > 65, 15, 0) +
+                                     IF(m.es_embarazada = 1, 20, 0) +
+                                     IF(m.tiene_discapacidad = 1, 20, 0) +
+                                     IF(m.enfermedad_cronica = 1, 10, 0) +
+                                     IF(m.vulnerable = 1 AND m.es_embarazada = 0 AND m.tiene_discapacidad = 0 AND m.enfermedad_cronica = 0, 5, 0)
+                                 )
+                                 FROM miembros m
+                                 WHERE m.id_familia = f.id_familia
+                             ),
+                             10
+                         ) AS prioridad
+                  FROM familias f";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -68,7 +84,23 @@ class FamiliaService
     // READ ONE (GET por ID)
     public function getFamiliaById($id)
     {
-        $query = "SELECT * FROM familias WHERE id_familia = :id LIMIT 1";
+        $query = "SELECT f.*,
+                         COALESCE(
+                             (
+                                 SELECT 10 + SUM(
+                                     IF(m.edad < 5, 15, 0) +
+                                     IF(m.edad > 65, 15, 0) +
+                                     IF(m.es_embarazada = 1, 20, 0) +
+                                     IF(m.tiene_discapacidad = 1, 20, 0) +
+                                     IF(m.enfermedad_cronica = 1, 10, 0) +
+                                     IF(m.vulnerable = 1 AND m.es_embarazada = 0 AND m.tiene_discapacidad = 0 AND m.enfermedad_cronica = 0, 5, 0)
+                                 )
+                                 FROM miembros m
+                                 WHERE m.id_familia = f.id_familia
+                             ),
+                             10
+                         ) AS prioridad
+                  FROM familias f WHERE f.id_familia = :id LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -83,8 +115,24 @@ class FamiliaService
     // BUSQUEDA AGIL (GET /search)
     public function searchFamilia($q)
     {
-        $query = "SELECT * FROM familias 
-                  WHERE cedula LIKE :q1 OR representante LIKE :q2 
+        $query = "SELECT f.*,
+                         COALESCE(
+                             (
+                                 SELECT 10 + SUM(
+                                     IF(m.edad < 5, 15, 0) +
+                                     IF(m.edad > 65, 15, 0) +
+                                     IF(m.es_embarazada = 1, 20, 0) +
+                                     IF(m.tiene_discapacidad = 1, 20, 0) +
+                                     IF(m.enfermedad_cronica = 1, 10, 0) +
+                                     IF(m.vulnerable = 1 AND m.es_embarazada = 0 AND m.tiene_discapacidad = 0 AND m.enfermedad_cronica = 0, 5, 0)
+                                 )
+                                 FROM miembros m
+                                 WHERE m.id_familia = f.id_familia
+                             ),
+                             10
+                         ) AS prioridad
+                  FROM familias f 
+                  WHERE f.cedula LIKE :q1 OR f.representante LIKE :q2 
                   LIMIT 20";
         $stmt = $this->db->prepare($query);
         $searchParam = "%{$q}%";
