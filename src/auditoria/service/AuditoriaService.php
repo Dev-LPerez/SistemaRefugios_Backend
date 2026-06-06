@@ -12,13 +12,14 @@ class AuditoriaService
 
     public function log(LogAuditoria $log)
     {
-        $query = "INSERT INTO auditoria_logs (usuario_id, accion, entidad, ip) VALUES (:usuario_id, :accion, :entidad, :ip)";
+        $query = "INSERT INTO auditoria_logs (usuario_id, accion, entidad, ip, detalle) VALUES (:usuario_id, :accion, :entidad, :ip, :detalle)";
         $stmt = $this->db->prepare($query);
 
         $stmt->bindParam(':usuario_id', $log->usuario_id, PDO::PARAM_INT);
         $stmt->bindParam(':accion', $log->accion);
         $stmt->bindParam(':entidad', $log->entidad);
         $stmt->bindParam(':ip', $log->ip);
+        $stmt->bindParam(':detalle', $log->detalle);
 
         try {
             $stmt->execute();
@@ -31,10 +32,10 @@ class AuditoriaService
 
     public function getAllLogs()
     {
-        $query = "SELECT l.*, u.user as username 
+        $query = "SELECT l.*, u.user as username, u.rol as rol
                   FROM auditoria_logs l 
                   LEFT JOIN usuarios u ON l.usuario_id = u.id_usuario 
-                  ORDER BY l.fecha DESC";
+                  ORDER BY l.id DESC";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);

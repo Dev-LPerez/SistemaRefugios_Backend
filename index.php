@@ -79,7 +79,30 @@ if (!$isLoginRoute) {
 
     // Auditoría
     if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
-        $log = new LogAuditoria($user->id_usuario, $method . ($action ? " $action" : ""), $route, $_SERVER['REMOTE_ADDR']);
+        $detalle = '';
+        $redactedData = $data;
+        if (is_array($redactedData) && isset($redactedData['password'])) {
+            $redactedData['password'] = '********';
+        }
+        
+        $dataStr = is_array($redactedData) ? json_encode($redactedData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '';
+        
+        if ($method === 'DELETE') {
+            if ($id) {
+                $detalle = "Eliminó registro con ID: $id";
+            } elseif ($id_familia) {
+                $detalle = "Eliminó miembro de familia ID: $id_familia";
+            } else {
+                $detalle = "Eliminó registro";
+            }
+        } elseif ($method === 'PUT') {
+            $targetId = $id ?? $id_familia ?? '';
+            $detalle = "Actualizó registro" . ($targetId ? " con ID: $targetId" : "") . ". Datos: $dataStr";
+        } elseif ($method === 'POST') {
+            $detalle = "Creó nuevo registro. Datos: $dataStr";
+        }
+
+        $log = new LogAuditoria($user->id_usuario, $method . ($action ? " $action" : ""), $route, $_SERVER['REMOTE_ADDR'], $detalle);
         $auditoriaService = new AuditoriaService($db);
         $auditoriaService->log($log);
     }

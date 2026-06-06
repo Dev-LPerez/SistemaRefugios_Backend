@@ -19,21 +19,23 @@ class ReporteService
         $query = "
             SELECT 
                 de.id_entrega,
-                de.fecha as fecha_entrega,
+                e.fecha as fecha_entrega,
                 r.nombre as recurso,
                 de.cantidad as cantidad_entregada,
                 f.representante as familia_receptora,
                 f.ubicacion_actual as ubicacion_receptora,
                 (
-                    SELECT GROUP_CONCAT(DISTINCT d.origen SEPARATOR ', ')
+                    SELECT GROUP_CONCAT(DISTINCT COALESCE(dn.nombre, d.origen) SEPARATOR ', ')
                     FROM detalle_donacion dd
                     JOIN donaciones d ON dd.id_donacion = d.id_donacion
+                    LEFT JOIN donante dn ON d.id_donante = dn.id_donante
                     WHERE dd.id_recurso = r.id_recurso
                 ) as posibles_origenes
             FROM detalle_entrega de
+            JOIN entregas e ON de.id_entrega = e.id_entrega
             JOIN recursos r ON de.id_recurso = r.id_recurso
-            JOIN familias f ON de.id_familia = f.id_familia
-            ORDER BY de.fecha DESC
+            JOIN familias f ON e.id_familia = f.id_familia
+            ORDER BY e.fecha DESC
             LIMIT 100
         ";
 
