@@ -87,6 +87,16 @@ class DonacionService
         }
     }
 
+    // Obtener todas las donaciones
+    public function getAllDonaciones()
+    {
+        $query = "SELECT * FROM donaciones ORDER BY fecha DESC";
+        $stmt = $this->db->query($query);
+        $donaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return ["status" => 200, "data" => $donaciones];
+    }
+
     // Obtener todas las donaciones con sus respectivos detalles (JOIN)
     public function getDonacionCompleta($id_donacion)
     {

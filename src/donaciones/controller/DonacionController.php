@@ -18,6 +18,9 @@ class DonacionController
                 if ($id) {
                     $response = $this->service->getDonacionCompleta($id);
                     $this->sendResponse($response);
+                } else {
+                    $response = $this->service->getAllDonaciones();
+                    $this->sendResponse($response);
                 }
                 break;
 
