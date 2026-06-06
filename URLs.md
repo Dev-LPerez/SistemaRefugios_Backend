@@ -416,7 +416,7 @@ DELETE /donaciones/1
 
 ## 9. Entregas
 
-### Registrar Entrega (descuenta inventario automáticamente)
+### Registrar Entrega - Un solo recurso (descuenta inventario automáticamente)
 ```
 POST /entregas
 ```
@@ -430,6 +430,31 @@ POST /entregas
 }
 ```
 **Respuesta esperada:** `201` — Verifica con `GET /recursos/1` que `cantidad_disponible` bajó.
+
+---
+
+### Registrar Entrega - Múltiples recursos (NUEVO)
+```
+POST /entregas
+```
+```json
+{
+  "estado": "entregado",
+  "fecha": "2026-05-14",
+  "id_familia": 1,
+  "recursos": [
+    {
+      "id_recurso": 1,
+      "cantidad": 20
+    },
+    {
+      "id_recurso": 2,
+      "cantidad": 5
+    }
+  ]
+}
+```
+**Respuesta esperada:** `201` — Verifica con `GET /recursos/1` y `GET /recursos/2` que el stock disminuyó para ambos.
 
 ---
 

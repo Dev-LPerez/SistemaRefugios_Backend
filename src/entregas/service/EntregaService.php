@@ -33,49 +33,53 @@ class EntregaService
         return true;
     }
 
-    // CREATE (POST) - Transaccional con validación de inventario
+    // CREATE (POST) - Transaccional con validación de inventario (Soporta múltiples recursos)
     public function createEntrega(CreateEntregaDTO $dto)
     {
         try {
             $this->db->beginTransaction();
 
-            // 0. Validar la regla de restricción de 3 días
+            // 0. Validar la regla de restricción de 3 días (solo una vez por familia)
             $this->checkUltimaEntrega($dto->id_familia);
 
-            // 1. Verificar si hay suficiente inventario
-            $queryStock = "SELECT cantidad_disponible, nombre FROM recursos WHERE id_recurso = :id_recurso FOR UPDATE";
-            $stmtStock = $this->db->prepare($queryStock);
-            $stmtStock->bindParam(':id_recurso', $dto->id_recurso, PDO::PARAM_INT);
-            $stmtStock->execute();
-            $recurso = $stmtStock->fetch(PDO::FETCH_ASSOC);
+            foreach ($dto->recursos as $item) {
+                $idRecurso = (int)$item['id_recurso'];
+                $cantidad = (int)$item['cantidad'];
 
-            if (!$recurso) {
-                throw new Exception("El recurso solicitado no existe.");
+                // 1. Verificar si hay suficiente inventario
+                $queryStock = "SELECT cantidad_disponible, nombre FROM recursos WHERE id_recurso = :id_recurso FOR UPDATE";
+                $stmtStock = $this->db->prepare($queryStock);
+                $stmtStock->bindParam(':id_recurso', $idRecurso, PDO::PARAM_INT);
+                $stmtStock->execute();
+                $recurso = $stmtStock->fetch(PDO::FETCH_ASSOC);
+
+                if (!$recurso) {
+                    throw new Exception("El recurso con ID " . $idRecurso . " no existe.");
+                }
+
+                if ($recurso['cantidad_disponible'] < $cantidad) {
+                    throw new Exception("Stock insuficiente. Solo quedan " . $recurso['cantidad_disponible'] . " de " . $recurso['nombre']);
+                }
+
+                // 2. Insertar el registro de la entrega
+                $queryInsert = "INSERT INTO detalle_entrega (estado, fecha, cantidad, id_familia, id_recurso) 
+                                VALUES (:estado, :fecha, :cantidad, :id_familia, :id_recurso)";
+                $stmtInsert = $this->db->prepare($queryInsert);
+                $stmtInsert->bindParam(':estado', $dto->estado);
+                $stmtInsert->bindParam(':fecha', $dto->fecha);
+                $stmtInsert->bindParam(':cantidad', $cantidad, PDO::PARAM_INT);
+                $stmtInsert->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
+                $stmtInsert->bindParam(':id_recurso', $idRecurso, PDO::PARAM_INT);
+                $stmtInsert->execute();
+
+                // 3. Descontar del inventario
+                $queryUpdate = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :decremento 
+                WHERE id_recurso = :id_recurso";
+                $stmtUpdate = $this->db->prepare($queryUpdate);
+                $stmtUpdate->bindParam(':decremento', $cantidad, PDO::PARAM_INT);
+                $stmtUpdate->bindParam(':id_recurso', $idRecurso, PDO::PARAM_INT);
+                $stmtUpdate->execute();
             }
-
-            if ($recurso['cantidad_disponible'] < $dto->cantidad) {
-                throw new Exception("Stock insuficiente. Solo quedan " . $recurso['cantidad_disponible'] . " de " . $recurso['nombre']);
-            }
-
-            // 2. Insertar el registro de la entrega
-            $queryInsert = "INSERT INTO detalle_entrega (estado, fecha, cantidad, id_familia, id_recurso) 
-                            VALUES (:estado, :fecha, :cantidad, :id_familia, :id_recurso)";
-            $stmtInsert = $this->db->prepare($queryInsert);
-            $stmtInsert->bindParam(':estado', $dto->estado);
-            $stmtInsert->bindParam(':fecha', $dto->fecha);
-            $stmtInsert->bindParam(':cantidad', $dto->cantidad, PDO::PARAM_INT);
-            $stmtInsert->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
-            $stmtInsert->bindParam(':id_recurso', $dto->id_recurso, PDO::PARAM_INT);
-            $stmtInsert->execute();
-
-            // 3. Descontar del inventario
-            // FIX: `:cantidad` no puede repetirse en la misma query → se usa `:decremento`
-            $queryUpdate = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :decremento 
-            WHERE id_recurso = :id_recurso";
-            $stmtUpdate = $this->db->prepare($queryUpdate);
-            $stmtUpdate->bindParam(':decremento', $dto->cantidad, PDO::PARAM_INT);
-            $stmtUpdate->bindParam(':id_recurso', $dto->id_recurso, PDO::PARAM_INT);
-            $stmtUpdate->execute();
 
             $this->db->commit();
             return ["status" => 201, "message" => "Entrega registrada exitosamente y el inventario ha sido actualizado."];
@@ -83,7 +87,7 @@ class EntregaService
         } catch (Exception $e) {
             $this->db->rollBack();
             $errorMsg = $e->getMessage();
-            $status = (strpos($errorMsg, 'Stock') !== false || strpos($errorMsg, 'Bloqueo') !== false) ? 400 : 500;
+            $status = (strpos($errorMsg, 'Stock') !== false || strpos($errorMsg, 'Bloqueo') !== false || strpos($errorMsg, 'inválidos') !== false) ? 400 : 500;
             return ["status" => $status, "message" => "Error al procesar la entrega.", "error" => $errorMsg];
         }
     }

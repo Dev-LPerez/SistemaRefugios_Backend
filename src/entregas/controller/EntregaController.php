@@ -23,7 +23,7 @@ class EntregaController
             case 'POST':
                 $dto = new CreateEntregaDTO($data);
                 if (!$dto->isValid()) {
-                    $this->sendResponse(["status" => 400, "error" => "Faltan datos (id_familia, id_recurso, cantidad mayor a 0)"]);
+                    $this->sendResponse(["status" => 400, "error" => "Faltan datos (id_familia y al menos un id_recurso con cantidad mayor a 0)"]);
                     return;
                 }
                 $response = $this->service->createEntrega($dto);
