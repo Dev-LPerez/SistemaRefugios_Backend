@@ -417,6 +417,7 @@ DELETE /donaciones/1
 ## 9. Entregas
 
 ### Registrar Entrega - Un solo recurso (descuenta inventario automáticamente)
+> *Nota: Este formato por compatibilidad se transforma internamente en un array de recursos.*
 ```
 POST /entregas
 ```
@@ -433,7 +434,8 @@ POST /entregas
 
 ---
 
-### Registrar Entrega - Múltiples recursos (NUEVO)
+### Registrar Entrega - Múltiples recursos
+> *Nota: Esto insertará un registro principal de entrega y múltiples detalles bajo ese mismo ID.*
 ```
 POST /entregas
 ```
@@ -496,6 +498,29 @@ POST /entregas
 ### Listar Entregas
 ```
 GET /entregas
+```
+**Respuesta:** Una lista consolidada cruzando la tabla cabecera con sus respectivos detalles (recursos) y familia. Múltiples recursos de una misma entrega compartirán el mismo `id_entrega` temporal y fecha. Por ejemplo:
+```json
+[
+  {
+    "id_entrega": 2,
+    "estado": "entregado",
+    "fecha": "2026-05-14",
+    "familia_representante": "Juan Pérez",
+    "recurso_nombre": "Agua embotellada",
+    "unidad": "Litros",
+    "cantidad": 20
+  },
+  {
+    "id_entrega": 2,
+    "estado": "entregado",
+    "fecha": "2026-05-14",
+    "familia_representante": "Juan Pérez",
+    "recurso_nombre": "Arroz",
+    "unidad": "Kilos",
+    "cantidad": 5
+  }
+]
 ```
 
 ### Ver Entrega por ID
