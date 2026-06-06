@@ -9,7 +9,12 @@ $dotenv->safeLoad();
 // 1. CONFIGURACIÓN DE CABECERAS (CORS y JSON)
 // ==========================================
 // Esto permite que Postman o cualquier Frontend (React, Angular, etc.) pueda comunicarse con la API
-header("Access-Control-Allow-Origin: *");
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    header("Access-Control-Allow-Origin: *");
+}
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
@@ -49,10 +54,10 @@ require_once 'src/middlewares/AuthMiddleware.php';
 require_once 'src/auditoria/service/AuditoriaService.php';
 require_once 'src/auditoria/entity/LogAuditoria.php';
 
-// Definimos explícitamente qué es una ruta pública (Login)
-// Acepta tanto ?route=usuarios&action=login como ?route=login
-$isLoginRoute = ($route === 'usuarios' && $action === 'login') || ($route === 'login');
-// Validar y auditar de forma global (Excepto si es la ruta de login)
+// Definimos explícitamente qué es una ruta pública (Login / Logout)
+// Acepta tanto login como logout
+$isLoginRoute = ($route === 'usuarios' && ($action === 'login' || $action === 'logout')) || ($route === 'login') || ($route === 'logout');
+// Validar y auditar de forma global (Excepto si es la ruta de login/logout)
 if (!$isLoginRoute) {
     // Definición de Accesos por Ruta
     $permisos = [
@@ -111,12 +116,17 @@ if (!$isLoginRoute) {
 }
 
 switch ($route) {
-    // Nueva ruta explícita y limpia para el login
+    // Nueva ruta explícita y limpia para el login / logout
     case 'login':
         require_once 'src/usuarios/controller/UsuarioController.php';
         $controller = new UsuarioController($db);
-        // Forzamos la acción 'login' hacia el controlador
-        $controller->handleRequest($method, $data, null, 'login');
+        $controller->handleRequest($method, $data, null, $action ?? 'login');
+        break;
+
+    case 'logout':
+        require_once 'src/usuarios/controller/UsuarioController.php';
+        $controller = new UsuarioController($db);
+        $controller->handleRequest($method, $data, null, 'logout');
         break;
 
     case 'usuarios':

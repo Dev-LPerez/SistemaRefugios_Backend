@@ -29,16 +29,26 @@ class AuthMiddleware
 
     public static function checkToken()
     {
-        $headers = apache_request_headers();
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+        $token = null;
 
-        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+        // 1. Intentar obtener el token desde la cookie HttpOnly
+        if (isset($_COOKIE['token'])) {
+            $token = $_COOKIE['token'];
+        } 
+        // 2. Si no está en la cookie, intentar desde el header Authorization (retrocompatibilidad)
+        else {
+            $headers = apache_request_headers();
+            $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
+            if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+                $token = $matches[1];
+            }
+        }
+
+        if (!$token) {
             http_response_code(401);
             echo json_encode(["status" => 401, "message" => "Acceso denegado. Token no proporcionado o formato inválido."]);
             exit();
         }
-
-        $token = $matches[1];
 
         try {
             $decoded = JWT::decode($token, new Key(self::getSecretKey(), self::$alg));
@@ -48,6 +58,46 @@ class AuthMiddleware
             echo json_encode(["status" => 401, "message" => "Acceso denegado. Token inválido o expirado."]);
             exit();
         }
+    }
+
+    public static function setHttpOnlyCookie($token)
+    {
+        $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        $options = [
+            'expires' => time() + (60 * 60 * 24), // 24 horas
+            'path' => '/',
+            'httponly' => true,
+        ];
+        
+        if ($isSecure) {
+            $options['secure'] = true;
+            $options['samesite'] = 'None';
+        } else {
+            $options['secure'] = false;
+            $options['samesite'] = 'Lax';
+        }
+
+        setcookie('token', $token, $options);
+    }
+
+    public static function clearHttpOnlyCookie()
+    {
+        $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        $options = [
+            'expires' => time() - 3600, // Expira en el pasado
+            'path' => '/',
+            'httponly' => true,
+        ];
+
+        if ($isSecure) {
+            $options['secure'] = true;
+            $options['samesite'] = 'None';
+        } else {
+            $options['secure'] = false;
+            $options['samesite'] = 'Lax';
+        }
+
+        setcookie('token', '', $options);
     }
 
     public static function checkRole($allowedRoles)

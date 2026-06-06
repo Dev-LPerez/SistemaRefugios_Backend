@@ -31,10 +31,14 @@ class UsuarioController
                         return;
                     }
                     $response = $this->service->login($data['user'], $data['password']);
+                    if (isset($response['status']) && $response['status'] === 200 && !empty($response['token'])) {
+                        require_once __DIR__ . '/../../middlewares/AuthMiddleware.php';
+                        AuthMiddleware::setHttpOnlyCookie($response['token']);
+                    }
                 } else if ($action === 'logout') {
-                    // Para JWT, el logout normalmente se maneja eliminando el token del lado del cliente
-                    // Pero proveemos el endpoint por completitud
-                    $this->sendResponse(["status" => 200, "message" => "Logout exitoso. Descarte el token en el cliente."]);
+                    require_once __DIR__ . '/../../middlewares/AuthMiddleware.php';
+                    AuthMiddleware::clearHttpOnlyCookie();
+                    $this->sendResponse(["status" => 200, "message" => "Logout exitoso. Cookie eliminada."]);
                     return;
                 } else {
                     $dto = new CreateUsuarioDTO($data);
