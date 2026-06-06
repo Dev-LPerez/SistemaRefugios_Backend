@@ -30,6 +30,19 @@ class EntregaController
                 $this->sendResponse($response);
                 break;
 
+            case 'PUT':
+                if (!$id) {
+                    $this->sendResponse(["status" => 400, "error" => "ID requerido para actualizar la entrega"]);
+                    return;
+                }
+                if (!isset($data['estado'])) {
+                    $this->sendResponse(["status" => 400, "error" => "Estado requerido"]);
+                    return;
+                }
+                $response = $this->service->updateEstado($id, $data['estado']);
+                $this->sendResponse($response);
+                break;
+
             case 'DELETE':
                 if (!$id) {
                     $this->sendResponse(["status" => 400, "error" => "ID requerido para anular la entrega"]);

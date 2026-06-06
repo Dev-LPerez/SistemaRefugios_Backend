@@ -181,4 +181,86 @@ class EntregaService
             return ["status" => 404, "message" => $e->getMessage()];
         }
     }
+
+    // UPDATE STATUS (PUT) - Actualizar el estado de la entrega y gestionar el inventario en consecuencia
+    public function updateEstado($id, $estado)
+    {
+        try {
+            $this->db->beginTransaction();
+
+            // 1. Obtener estado anterior
+            $queryGet = "SELECT estado FROM entregas WHERE id_entrega = :id";
+            $stmtGet = $this->db->prepare($queryGet);
+            $stmtGet->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtGet->execute();
+            $entrega = $stmtGet->fetch(PDO::FETCH_ASSOC);
+
+            if (!$entrega) {
+                throw new Exception("Entrega no encontrada.");
+            }
+
+            $estadoAnterior = strtolower($entrega['estado']);
+            $estadoNuevo = strtolower($estado);
+
+            if ($estadoAnterior !== $estadoNuevo) {
+                // Normalizar estado para la base de datos (enum: pendiente, entregado, cancelado)
+                $dbEstado = $estadoNuevo;
+                if ($dbEstado === 'cancelada') $dbEstado = 'cancelado';
+
+                // 2. Actualizar el estado de la cabecera
+                $queryUpdate = "UPDATE entregas SET estado = :estado WHERE id_entrega = :id";
+                $stmtUpdate = $this->db->prepare($queryUpdate);
+                $stmtUpdate->bindParam(':estado', $dbEstado);
+                $stmtUpdate->bindParam(':id', $id, PDO::PARAM_INT);
+                $stmtUpdate->execute();
+
+                // 3. Manejar inventario si pasa a 'cancelado' o si se reactiva desde 'cancelado'
+                // Obtener los detalles
+                $querySelect = "SELECT id_recurso, cantidad FROM detalle_entrega WHERE id_entrega = :id";
+                $stmtSelect = $this->db->prepare($querySelect);
+                $stmtSelect->bindParam(':id', $id, PDO::PARAM_INT);
+                $stmtSelect->execute();
+                $detalles = $stmtSelect->fetchAll(PDO::FETCH_ASSOC);
+
+                if ($dbEstado === 'cancelado') {
+                    // Devolver stock
+                    foreach ($detalles as $detalle) {
+                        $queryRefund = "UPDATE recursos SET cantidad_disponible = cantidad_disponible + :incremento WHERE id_recurso = :id_recurso";
+                        $stmtRefund = $this->db->prepare($queryRefund);
+                        $stmtRefund->bindParam(':incremento', $detalle['cantidad'], PDO::PARAM_INT);
+                        $stmtRefund->bindParam(':id_recurso', $detalle['id_recurso'], PDO::PARAM_INT);
+                        $stmtRefund->execute();
+                    }
+                } elseif ($estadoAnterior === 'cancelado') {
+                    // Descontar stock (validando disponibilidad)
+                    foreach ($detalles as $detalle) {
+                        // Validar stock
+                        $queryStock = "SELECT cantidad_disponible, nombre FROM recursos WHERE id_recurso = :id_recurso FOR UPDATE";
+                        $stmtStock = $this->db->prepare($queryStock);
+                        $stmtStock->bindParam(':id_recurso', $detalle['id_recurso'], PDO::PARAM_INT);
+                        $stmtStock->execute();
+                        $recurso = $stmtStock->fetch(PDO::FETCH_ASSOC);
+
+                        if ($recurso['cantidad_disponible'] < $detalle['cantidad']) {
+                            throw new Exception("Stock insuficiente para reactivar entrega. Solo quedan " . $recurso['cantidad_disponible'] . " de " . $recurso['nombre']);
+                        }
+
+                        // Descontar
+                        $queryUpdateStock = "UPDATE recursos SET cantidad_disponible = cantidad_disponible - :decremento WHERE id_recurso = :id_recurso";
+                        $stmtUpdateStock = $this->db->prepare($queryUpdateStock);
+                        $stmtUpdateStock->bindParam(':decremento', $detalle['cantidad'], PDO::PARAM_INT);
+                        $stmtUpdateStock->bindParam(':id_recurso', $detalle['id_recurso'], PDO::PARAM_INT);
+                        $stmtUpdateStock->execute();
+                    }
+                }
+            }
+
+            $this->db->commit();
+            return ["status" => 200, "message" => "Estado de entrega actualizado correctamente."];
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ["status" => 400, "message" => $e->getMessage()];
+        }
+    }
 }
