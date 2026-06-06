@@ -45,7 +45,31 @@ class FamiliaService
 
         try {
             if ($stmt->execute()) {
-                return ["status" => 201, "message" => "Familia registrada exitosamente.", "id" => $this->db->lastInsertId()];
+                $id_familia = $this->db->lastInsertId();
+
+                // Crear automáticamente al representante como miembro (Cabeza de Hogar)
+                $queryMiembro = "INSERT INTO miembros (
+                                    nombre, edad, parentezco, tipo_documento, numero_documento, 
+                                    vulnerable, tipo_vulnerabilidad, id_familia,
+                                    es_embarazada, tiene_discapacidad, enfermedad_cronica
+                                 ) VALUES (
+                                    :nombre, :edad, :parentezco, :tipo_documento, :numero_documento, 
+                                    0, '', :id_familia,
+                                    0, 0, 0
+                                 )";
+                $stmtMiembro = $this->db->prepare($queryMiembro);
+                $parentezco = 'Cabeza de Hogar';
+                $tipoDoc = 'CC';
+                
+                $stmtMiembro->bindParam(':nombre', $dto->representante);
+                $stmtMiembro->bindValue(':edad', null, PDO::PARAM_NULL);
+                $stmtMiembro->bindParam(':parentezco', $parentezco);
+                $stmtMiembro->bindParam(':tipo_documento', $tipoDoc);
+                $stmtMiembro->bindParam(':numero_documento', $dto->cedula);
+                $stmtMiembro->bindParam(':id_familia', $id_familia, PDO::PARAM_INT);
+                $stmtMiembro->execute();
+
+                return ["status" => 201, "message" => "Familia registrada exitosamente.", "id" => $id_familia];
             }
         } catch (PDOException $e) {
             // Si la tabla original es 'familia' singular y falló, hacemos un fallback simple en entorno legacy si es necesario

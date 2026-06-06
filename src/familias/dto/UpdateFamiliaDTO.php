@@ -21,7 +21,8 @@ class UpdateFamiliaDTO
         $this->direccion = $data['direccion'] ?? null;
         $this->cantidad_miembros = $data['cantidad_miembros'] ?? null;
         $this->prioridad = $data['prioridad'] ?? null;
-        $this->id_refugio = $data['id_refugio'] ?? $data['refugio_id'] ?? null;
+        $idRefugio = $data['id_refugio'] ?? $data['refugio_id'] ?? null;
+        $this->id_refugio = ($idRefugio === 0 || $idRefugio === '0' || $idRefugio === '') ? null : (int)$idRefugio;
         $this->ubicacion_actual = $data['ubicacion_actual'] ?? null;
         
         if (isset($data['aceptacion_habeas_data'])) {

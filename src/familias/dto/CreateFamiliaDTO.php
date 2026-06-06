@@ -21,7 +21,8 @@ class CreateFamiliaDTO
         $this->prioridad = $data['prioridad'] ?? null;
         
         // Soporte retrocompatible y nuevos campos
-        $this->id_refugio = $data['id_refugio'] ?? $data['refugio_id'] ?? null;
+        $idRefugio = $data['id_refugio'] ?? $data['refugio_id'] ?? null;
+        $this->id_refugio = ($idRefugio === 0 || $idRefugio === '0' || $idRefugio === '') ? null : (int)$idRefugio;
         $this->ubicacion_actual = $data['ubicacion_actual'] ?? 'Vivienda';
         
         // Aceptación habeas data (booleano)
