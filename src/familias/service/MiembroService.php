@@ -39,6 +39,13 @@ class MiembroService
 
         try {
             if ($stmt->execute()) {
+                // Actualizar cantidad_miembros en la familia correspondiente
+                $updateQuery = "UPDATE familias SET cantidad_miembros = (SELECT COUNT(*) FROM miembros WHERE id_familia = :id_familia) WHERE id_familia = :id_familia2";
+                $updateStmt = $this->db->prepare($updateQuery);
+                $updateStmt->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
+                $updateStmt->bindParam(':id_familia2', $dto->id_familia, PDO::PARAM_INT);
+                $updateStmt->execute();
+
                 return ["status" => 201, "message" => "Miembro registrado exitosamente."];
             }
         } catch (PDOException $e) {
@@ -96,7 +103,30 @@ class MiembroService
         $stmt->bindParam(':id', $dto->id_persona, PDO::PARAM_INT);
 
         try {
-            if ($stmt->execute() && $stmt->rowCount() > 0) {
+            // Consultar familia anterior para actualizarla si cambia de familia
+            $getOldFamQuery = "SELECT id_familia FROM miembros WHERE id_persona = :id LIMIT 1";
+            $getOldFamStmt = $this->db->prepare($getOldFamQuery);
+            $getOldFamStmt->bindParam(':id', $dto->id_persona, PDO::PARAM_INT);
+            $getOldFamStmt->execute();
+            $oldMiembro = $getOldFamStmt->fetch(PDO::FETCH_ASSOC);
+            $old_familia_id = $oldMiembro ? (int)$oldMiembro['id_familia'] : null;
+
+            if ($stmt->execute()) {
+                // Actualizar nueva familia
+                $updateQuery = "UPDATE familias SET cantidad_miembros = (SELECT COUNT(*) FROM miembros WHERE id_familia = :id_familia) WHERE id_familia = :id_familia2";
+                $updateStmt = $this->db->prepare($updateQuery);
+                $updateStmt->bindParam(':id_familia', $dto->id_familia, PDO::PARAM_INT);
+                $updateStmt->bindParam(':id_familia2', $dto->id_familia, PDO::PARAM_INT);
+                $updateStmt->execute();
+
+                // Si cambió de familia, actualizar la familia anterior también
+                if ($old_familia_id && $old_familia_id !== (int)$dto->id_familia) {
+                    $updateStmt2 = $this->db->prepare($updateQuery);
+                    $updateStmt2->bindParam(':id_familia', $old_familia_id, PDO::PARAM_INT);
+                    $updateStmt2->bindParam(':id_familia2', $old_familia_id, PDO::PARAM_INT);
+                    $updateStmt2->execute();
+                }
+
                 return ["status" => 200, "message" => "Miembro actualizado exitosamente."];
             }
             return ["status" => 404, "message" => "Miembro no encontrado o sin cambios."];
@@ -107,11 +137,26 @@ class MiembroService
 
     public function deleteMiembro($id)
     {
+        // Consultar familia del miembro a eliminar para recalcular
+        $getFamQuery = "SELECT id_familia FROM miembros WHERE id_persona = :id LIMIT 1";
+        $getFamStmt = $this->db->prepare($getFamQuery);
+        $getFamStmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $getFamStmt->execute();
+        $miembro = $getFamStmt->fetch(PDO::FETCH_ASSOC);
+        $id_familia = $miembro ? (int)$miembro['id_familia'] : null;
+
         $query = "DELETE FROM miembros WHERE id_persona = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
         if ($stmt->execute() && $stmt->rowCount() > 0) {
+            if ($id_familia) {
+                $updateQuery = "UPDATE familias SET cantidad_miembros = (SELECT COUNT(*) FROM miembros WHERE id_familia = :id_familia) WHERE id_familia = :id_familia2";
+                $updateStmt = $this->db->prepare($updateQuery);
+                $updateStmt->bindParam(':id_familia', $id_familia, PDO::PARAM_INT);
+                $updateStmt->bindParam(':id_familia2', $id_familia, PDO::PARAM_INT);
+                $updateStmt->execute();
+            }
             return ["status" => 200, "message" => "Miembro eliminado exitosamente."];
         }
         return ["status" => 404, "message" => "Miembro no encontrado."];

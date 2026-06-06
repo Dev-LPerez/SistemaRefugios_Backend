@@ -83,6 +83,7 @@ class FamiliaService
     public function getAllFamilias()
     {
         $query = "SELECT f.*,
+                         (SELECT COUNT(*) FROM miembros m WHERE m.id_familia = f.id_familia) AS cantidad_miembros,
                          COALESCE(
                              (
                                  SELECT 10 + SUM(
@@ -109,6 +110,7 @@ class FamiliaService
     public function getFamiliaById($id)
     {
         $query = "SELECT f.*,
+                         (SELECT COUNT(*) FROM miembros m WHERE m.id_familia = f.id_familia) AS cantidad_miembros,
                          COALESCE(
                              (
                                  SELECT 10 + SUM(
@@ -140,6 +142,7 @@ class FamiliaService
     public function searchFamilia($q)
     {
         $query = "SELECT f.*,
+                         (SELECT COUNT(*) FROM miembros m WHERE m.id_familia = f.id_familia) AS cantidad_miembros,
                          COALESCE(
                              (
                                  SELECT 10 + SUM(
