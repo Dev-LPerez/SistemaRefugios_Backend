@@ -60,9 +60,12 @@ class AuthMiddleware
         }
     }
 
-    public static function setHttpOnlyCookie($token)
+public static function setHttpOnlyCookie($token)
     {
-        $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        // Detecta HTTPS normal o el header que envía el proxy de Render
+        $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        
         $options = [
             'expires' => time() + (60 * 60 * 24), // 24 horas
             'path' => '/',
@@ -71,7 +74,7 @@ class AuthMiddleware
         
         if ($isSecure) {
             $options['secure'] = true;
-            $options['samesite'] = 'None';
+            $options['samesite'] = 'None'; // Permite que Vercel reciba la cookie desde Render
         } else {
             $options['secure'] = false;
             $options['samesite'] = 'Lax';
@@ -80,9 +83,11 @@ class AuthMiddleware
         setcookie('token', $token, $options);
     }
 
-    public static function clearHttpOnlyCookie()
+public static function clearHttpOnlyCookie()
     {
-        $isSecure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+        $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
         $options = [
             'expires' => time() - 3600, // Expira en el pasado
             'path' => '/',
