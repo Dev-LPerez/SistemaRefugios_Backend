@@ -36,6 +36,9 @@ class Database
 
             $this->conn = new PDO($dsn, $this->username, $this->password, $options);
 
+            // Forzar zona horaria Colombia (UTC-5) en la sesión MySQL
+            $this->conn->exec("SET time_zone = '-05:00'");
+
         } catch (PDOException $exception) {
             http_response_code(500);
             echo json_encode([

@@ -1,4 +1,7 @@
 <?php
+// Zona horaria Colombia (UTC-5, sin cambio horario)
+date_default_timezone_set('America/Bogota');
+
 require_once __DIR__ . '/vendor/autoload.php';
 
 // Cargar variables de entorno desde el archivo .env
