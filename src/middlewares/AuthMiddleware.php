@@ -12,15 +12,38 @@ class AuthMiddleware
         return getenv('JWT_SECRET') ?: "MY_SUPER_SECRET_KEY_REFUGIOS_2026_SISTEMA";
     }
 
+    /**
+     * Detecta si la petición viene por HTTPS.
+     * Render termina TLS en el proxy y reenvía la petición al contenedor
+     * en HTTP plano, por eso $_SERVER['HTTPS'] nunca es 'on'.
+     * El proxy añade X-Forwarded-Proto: https, que es la señal fiable.
+     */
+    private static function isHttps(): bool
+    {
+        // Render (y la mayoría de proxies) envía este header
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            return strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https';
+        }
+        // Fallback para entornos donde Apache sí maneja TLS directamente
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            return true;
+        }
+        // Fallback adicional: Render también puede enviar X-Forwarded-Ssl
+        if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on') {
+            return true;
+        }
+        return false;
+    }
+
     public static function generateToken($usuario)
     {
         $payload = [
-            "iat" => time(), // Tiempo que inició el token
-            "exp" => time() + (60 * 60 * 24), // Expira en 24 horas
+            "iat" => time(),
+            "exp" => time() + (60 * 60 * 24), // 24 horas
             "data" => [
                 "id_usuario" => $usuario['id_usuario'],
-                "user" => $usuario['user'],
-                "rol" => $usuario['rol']
+                "user"       => $usuario['user'],
+                "rol"        => $usuario['rol']
             ]
         ];
 
@@ -34,8 +57,8 @@ class AuthMiddleware
         // 1. Intentar obtener el token desde la cookie HttpOnly
         if (isset($_COOKIE['token'])) {
             $token = $_COOKIE['token'];
-        } 
-        // 2. Si no está en la cookie, intentar desde el header Authorization (retrocompatibilidad)
+        }
+        // 2. Fallback: header Authorization (útil para Postman / tests)
         else {
             $headers = apache_request_headers();
             $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? null;
@@ -52,7 +75,7 @@ class AuthMiddleware
 
         try {
             $decoded = JWT::decode($token, new Key(self::getSecretKey(), self::$alg));
-            return $decoded->data; // Devuelve los datos del usuario en el token
+            return $decoded->data;
         } catch (Exception $e) {
             http_response_code(401);
             echo json_encode(["status" => 401, "message" => "Acceso denegado. Token inválido o expirado."]);
@@ -60,49 +83,32 @@ class AuthMiddleware
         }
     }
 
-public static function setHttpOnlyCookie($token)
+    public static function setHttpOnlyCookie($token)
     {
-        // Detecta HTTPS normal o el header que envía el proxy de Render
-        $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
-                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-        
-        $options = [
-            'expires' => time() + (60 * 60 * 24), // 24 horas
-            'path' => '/',
-            'httponly' => true,
-        ];
-        
-        if ($isSecure) {
-            $options['secure'] = true;
-            $options['samesite'] = 'None'; // Permite que Vercel reciba la cookie desde Render
-        } else {
-            $options['secure'] = false;
-            $options['samesite'] = 'Lax';
-        }
+        $secure   = self::isHttps();
+        $samesite = $secure ? 'None' : 'Lax';
 
-        setcookie('token', $token, $options);
+        setcookie('token', $token, [
+            'expires'  => time() + (60 * 60 * 24),
+            'path'     => '/',
+            'httponly' => true,
+            'secure'   => $secure,
+            'samesite' => $samesite,
+        ]);
     }
 
-public static function clearHttpOnlyCookie()
+    public static function clearHttpOnlyCookie()
     {
-        $isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
-                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+        $secure   = self::isHttps();
+        $samesite = $secure ? 'None' : 'Lax';
 
-        $options = [
-            'expires' => time() - 3600, // Expira en el pasado
-            'path' => '/',
+        setcookie('token', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
             'httponly' => true,
-        ];
-
-        if ($isSecure) {
-            $options['secure'] = true;
-            $options['samesite'] = 'None';
-        } else {
-            $options['secure'] = false;
-            $options['samesite'] = 'Lax';
-        }
-
-        setcookie('token', '', $options);
+            'secure'   => $secure,
+            'samesite' => $samesite,
+        ]);
     }
 
     public static function checkRole($allowedRoles)
@@ -112,7 +118,7 @@ public static function clearHttpOnlyCookie()
         if (!in_array($user_data->rol, $allowedRoles)) {
             http_response_code(403);
             echo json_encode([
-                "status" => 403, 
+                "status"  => 403,
                 "message" => "Acceso denegado. Se requiere uno de los siguientes roles: " . implode(', ', $allowedRoles)
             ]);
             exit();
